@@ -62,7 +62,7 @@ function Tab.new(
 		Size = 28,
 		ColorRole = "Text",
 	})
-	title.Position = UDim2.fromOffset(24, 18)
+	title.Position = UDim2.fromOffset(24, 16)
 	title.Size = UDim2.new(0.56, -24, 0, 34)
 
 	local subtitle = Base.text(ctx, header, description, {
@@ -70,7 +70,7 @@ function Tab.new(
 		Size = 13,
 		ColorRole = "TextMuted",
 	})
-	subtitle.Position = UDim2.fromOffset(24, 56)
+	subtitle.Position = UDim2.fromOffset(24, 58)
 	subtitle.Size = UDim2.new(0.56, -24, 0, 20)
 	subtitle.Visible = description ~= ""
 
@@ -137,6 +137,10 @@ function Tab.new(
 		ctx.Paint(entry.button, "BackgroundColor3", backgroundRole)
 		ctx.Paint(entry.label, "TextColor3", labelRole)
 		entry.underline.Visible = active
+		entry.underline.BackgroundTransparency = if active then 0.4 else 1
+		Animation.play(entry.underline, current.Motion.Fast, {
+			BackgroundTransparency = if active then 0 else 1,
+		}, { easing = "Quad" })
 		Animation.play(entry.button, current.Motion.Fast, {
 			BackgroundColor3 = ctx.Color(backgroundRole),
 			BackgroundTransparency = if active or hovered then 0 else 1,
@@ -273,7 +277,29 @@ function Tab.new(
 	end
 
 	function tab:SetVisible(visible: boolean)
+		if root.Visible == visible then
+			return
+		end
 		root.Visible = visible
+		if not visible then
+			return
+		end
+
+		local motion = ctx.GetTheme().Motion.Fast
+		local bodyY = theme.Window.PageHeader + 1
+		body.Position = UDim2.fromOffset(0, bodyY + 8)
+		title.TextTransparency = 0.45
+		subtitle.TextTransparency = 0.45
+
+		Animation.play(body, motion, {
+			Position = UDim2.fromOffset(0, bodyY),
+		}, { easing = "Quart" })
+		Animation.play(title, motion, {
+			TextTransparency = 0,
+		}, { easing = "Quad" })
+		Animation.play(subtitle, motion, {
+			TextTransparency = 0,
+		}, { easing = "Quad" })
 	end
 
 	function tab:_ApplySearch(query: string): boolean

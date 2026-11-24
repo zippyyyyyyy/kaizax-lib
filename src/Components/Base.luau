@@ -169,27 +169,29 @@ function Base.chevron(ctx: Types.UIContext, parent: Instance, colorRole: string?
 	local holder = Util.frame({
 		Name = "Chevron",
 		BackgroundTransparency = 1,
-		Size = UDim2.fromOffset(12, 12),
+		Size = UDim2.fromOffset(14, 14),
 	}, parent)
 
 	local left = Util.frame({
+		Name = "Left",
 		AnchorPoint = Vector2.new(0.5, 0.5),
 		BackgroundTransparency = 0,
 		BorderSizePixel = 0,
-		Position = UDim2.fromOffset(3.9, 4.9),
+		Position = UDim2.fromOffset(4.4, 5.4),
 		Rotation = 45,
-		Size = UDim2.fromOffset(6, 1.5),
+		Size = UDim2.fromOffset(7.5, 2),
 	}, holder)
 	Util.corner(left, 1)
 	ctx.Paint(left, "BackgroundColor3", colorRole or "TextFaint")
 
 	local right = Util.frame({
+		Name = "Right",
 		AnchorPoint = Vector2.new(0.5, 0.5),
 		BackgroundTransparency = 0,
 		BorderSizePixel = 0,
-		Position = UDim2.fromOffset(8.1, 4.9),
+		Position = UDim2.fromOffset(9.6, 5.4),
 		Rotation = -45,
-		Size = UDim2.fromOffset(6, 1.5),
+		Size = UDim2.fromOffset(7.5, 2),
 	}, holder)
 	Util.corner(right, 1)
 	ctx.Paint(right, "BackgroundColor3", colorRole or "TextFaint")

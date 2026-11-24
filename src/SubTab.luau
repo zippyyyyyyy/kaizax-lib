@@ -2,6 +2,7 @@
 
 local Types = require(script.Parent.Types)
 local Util = require(script.Parent.Util)
+local Animation = require(script.Parent.Animation)
 local Section = require(script.Parent.Section)
 
 local SubTab = {}
@@ -140,8 +141,18 @@ function SubTab.new(
 	end
 
 	function subtab:_SetActive(value: boolean)
+		local wasActive = active
 		active = value
 		scroller.Visible = value
+
+		if value and not wasActive then
+			holder.Position = UDim2.fromOffset(24, 26)
+			Animation.play(holder, ctx.GetTheme().Motion.Fast, {
+				Position = UDim2.fromOffset(24, 20),
+			}, { easing = "Quart" })
+		elseif not value then
+			holder.Position = UDim2.fromOffset(24, 20)
+		end
 	end
 
 	function subtab:_IsActive(): boolean

@@ -55,27 +55,30 @@ function Search.new(
 	local icon = Util.frame({
 		Name = "Icon",
 		BackgroundTransparency = 1,
-		Position = UDim2.fromOffset(9, 0),
-		Size = UDim2.fromOffset(14, 32),
+		Position = UDim2.fromOffset(10, 0),
+		Size = UDim2.fromOffset(16, 32),
 	}, frame)
+	local iconScale = Util.create("UIScale", { Scale = 1 }, icon) :: UIScale
 
 	local ring = Util.frame({
+		Name = "Ring",
 		AnchorPoint = Vector2.new(0.5, 0.5),
 		BackgroundTransparency = 1,
-		Position = UDim2.fromOffset(6, 11),
-		Size = UDim2.fromOffset(8, 8),
+		Position = UDim2.fromOffset(6.5, 15),
+		Size = UDim2.fromOffset(9, 9),
 	}, icon)
 	Util.corner(ring, 999)
-	local ringStroke = Util.stroke(ring, 1.4)
+	local ringStroke = Util.stroke(ring, 1.5)
 	ctx.Paint(ringStroke, "Color", "TextFaint")
 
 	local handle = Util.frame({
+		Name = "Handle",
 		AnchorPoint = Vector2.new(0.5, 0.5),
 		BackgroundColor3 = theme.Palette.TextFaint,
 		BorderSizePixel = 0,
-		Position = UDim2.fromOffset(11, 16),
+		Position = UDim2.fromOffset(12.5, 21),
 		Rotation = 45,
-		Size = UDim2.fromOffset(5, 1.4),
+		Size = UDim2.fromOffset(6.5, 1.5),
 	}, icon)
 	Util.corner(handle, 1)
 	ctx.Paint(handle, "BackgroundColor3", "TextFaint")
@@ -89,8 +92,8 @@ function Search.new(
 		MultiLine = false,
 		PlaceholderColor3 = theme.Palette.TextFaint,
 		PlaceholderText = placeholder,
-		Position = UDim2.fromOffset(26, 0),
-		Size = UDim2.new(1, -52, 1, 0),
+		Position = UDim2.fromOffset(32, 0),
+		Size = UDim2.new(1, -64, 1, 0),
 		Text = "",
 		TextColor3 = theme.Palette.Text,
 		TextSize = 13,
@@ -106,7 +109,7 @@ function Search.new(
 		AnchorPoint = Vector2.new(1, 0.5),
 		BackgroundTransparency = 1,
 		BorderSizePixel = 0,
-		Position = UDim2.new(1, -4, 0.5, 0),
+		Position = UDim2.new(1, -8, 0.5, 0),
 		Size = UDim2.fromOffset(20, 20),
 		Text = "",
 		AutoButtonColor = false,
@@ -136,8 +139,6 @@ function Search.new(
 	local function paintIcon(role: string)
 		ctx.Paint(ringStroke, "Color", role)
 		ctx.Paint(handle, "BackgroundColor3", role)
-		ringStroke.Color = ctx.Color(role)
-		handle.BackgroundColor3 = ctx.Color(role)
 	end
 
 	local function apply(animate: boolean)
@@ -157,15 +158,26 @@ function Search.new(
 			Animation.play(stroke, current.Motion.Fast, {
 				Color = ctx.Color(targetStroke),
 			}, { easing = "Quad" })
+			Animation.play(ringStroke, current.Motion.Fast, {
+				Color = ctx.Color(iconRole),
+			}, { easing = "Quad" })
+			Animation.play(handle, current.Motion.Fast, {
+				BackgroundColor3 = ctx.Color(iconRole),
+			}, { easing = "Quad" })
+			Animation.play(iconScale, current.Motion.Normal, {
+				Scale = if focused then 1.08 else 1,
+			}, { easing = "Quad" })
 		else
 			frame.BackgroundColor3 = ctx.Color(targetFrame)
 			stroke.Color = ctx.Color(targetStroke)
+			ringStroke.Color = ctx.Color(iconRole)
+			handle.BackgroundColor3 = ctx.Color(iconRole)
+			iconScale.Scale = if focused then 1.08 else 1
 		end
 	end
 
 	local function syncClear()
 		clearButton.Visible = text ~= ""
-		field.Size = UDim2.new(1, if text ~= "" then -52 else -34, 1, 0)
 	end
 
 	local function emit(textValue: string, silent: boolean?)

@@ -77,7 +77,7 @@ function Dropdown.new(
 		XAlign = Enum.TextXAlignment.Left,
 	})
 	valueLabel.Position = UDim2.fromOffset(10, 0)
-	valueLabel.Size = UDim2.new(1, -30, 1, 0)
+	valueLabel.Size = UDim2.new(1, -38, 1, 0)
 
 	local chevron = Base.chevron(ctx, button, "TextFaint")
 	chevron.AnchorPoint = Vector2.new(1, 0.5)

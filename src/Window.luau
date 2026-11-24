@@ -270,7 +270,7 @@ function Window.new(library: any, options: Options): Window
 		Name = "BrandDot",
 		BackgroundColor3 = theme.Palette.Accent,
 		BorderSizePixel = 0,
-		Position = UDim2.fromOffset(18, 21),
+		Position = UDim2.fromOffset(20, 23),
 		Size = UDim2.fromOffset(10, 10),
 		ZIndex = 3,
 	}, topBar)
@@ -281,8 +281,8 @@ function Window.new(library: any, options: Options): Window
 		Name = "Title",
 		BackgroundTransparency = 1,
 		Font = theme.Fonts.Medium,
-		Position = UDim2.fromOffset(36, 0),
-		Size = UDim2.new(0.5, -52, 1, 0),
+		Position = UDim2.fromOffset(40, 0),
+		Size = UDim2.new(0.5, -56, 1, 0),
 		Text = options.Title or "Kaizax",
 		TextColor3 = theme.Palette.Text,
 		TextSize = 14,
@@ -405,11 +405,17 @@ function Window.new(library: any, options: Options): Window
 		Util.paint(entry.button, "BackgroundColor3", backgroundRole, current)
 		Util.paint(entry.label, "TextColor3", labelRole, current)
 		entry.accent.Visible = active
+		entry.accent.BackgroundTransparency = if active then 0.35 else 1
 
 		Animation.play(entry.button, current.Motion.Fast, {
 			BackgroundColor3 = (current.Palette :: any)[backgroundRole],
 		}, { easing = "Quad" })
-		entry.label.TextColor3 = (current.Palette :: any)[labelRole]
+		Animation.play(entry.label, current.Motion.Fast, {
+			TextColor3 = (current.Palette :: any)[labelRole],
+		}, { easing = "Quad" })
+		Animation.play(entry.accent, current.Motion.Fast, {
+			BackgroundTransparency = if active then 0 else 1,
+		}, { easing = "Quad" })
 	end
 
 	local function selectTab(target: any)
@@ -477,6 +483,11 @@ function Window.new(library: any, options: Options): Window
 			LayoutOrder = #tabs,
 		}, tabScroller)
 		Util.corner(button, theme.Radius.Element)
+		local tabScale = Base.pressable(button, bag)
+		tabScale.Scale = 0.96
+		Animation.play(tabScale, theme.Motion.Normal, {
+			Scale = 1,
+		}, { delay = 0.03 * #tabs, easing = "Quart" })
 
 		local accent = Util.frame({
 			Name = "Accent",
@@ -812,6 +823,7 @@ function Window.new(library: any, options: Options): Window
 			layer.scale.Scale = nextScale
 		end
 		updateSearchVisibility()
+		return nextScale
 	end
 
 	bag:Add(workspace.CurrentCamera:GetPropertyChangedSignal("ViewportSize"):Connect(function()
@@ -826,6 +838,7 @@ function Window.new(library: any, options: Options): Window
 		local popupFrame = Util.frame({
 			Name = "Popup",
 			BackgroundColor3 = library:_GetTheme().Palette.SurfaceRaised,
+			BackgroundTransparency = 0.12,
 			BorderSizePixel = 0,
 			Size = UDim2.fromOffset(popupWidth, popupHeight),
 			ZIndex = 60,
@@ -841,6 +854,9 @@ function Window.new(library: any, options: Options): Window
 		Animation.play(popupScale, library:_GetTheme().Motion.Fast, {
 			Scale = scale.Scale,
 		}, { easing = "Quart", direction = "Out" })
+		Animation.play(popupFrame, library:_GetTheme().Motion.Fast, {
+			BackgroundTransparency = 0,
+		}, { easing = "Quad" })
 
 		local viewport = Util.viewportSize()
 		local anchorPosition = anchor.AbsolutePosition
@@ -977,7 +993,7 @@ function Window.new(library: any, options: Options): Window
 	content.Position = UDim2.fromOffset(theme.Window.Sidebar, theme.Window.TopBar)
 	content.Size = UDim2.new(1, -theme.Window.Sidebar, 1, -theme.Window.TopBar)
 
-	applyScale()
+	local initialScale = applyScale()
 	syncShadow()
 
 	local viewport = Util.viewportSize()
@@ -992,12 +1008,13 @@ function Window.new(library: any, options: Options): Window
 		moveToAbsolute(options.Position)
 	end
 
+	local subtitle: TextLabel? = nil
 	if options.Subtitle and options.Subtitle ~= "" then
-		local subtitle = Util.label({
+		subtitle = Util.label({
 			BackgroundTransparency = 1,
 			Font = theme.Fonts.Mono,
-			Position = UDim2.new(0, 36, 0, 38),
-			Size = UDim2.new(0.5, -52, 0, 14),
+			Position = UDim2.new(0, 40, 0, 35),
+			Size = UDim2.new(0.5, -56, 0, 16),
 			Text = options.Subtitle,
 			TextColor3 = theme.Palette.TextMuted,
 			TextSize = 11,
@@ -1006,8 +1023,48 @@ function Window.new(library: any, options: Options): Window
 			ZIndex = 3,
 		}, topBar)
 		Util.paint(subtitle, "TextColor3", "TextMuted", theme)
-		titleLabel.Position = UDim2.fromOffset(36, 10)
-		titleLabel.Size = UDim2.new(0.5, -52, 0, 24)
+		titleLabel.Position = UDim2.fromOffset(40, 9)
+		titleLabel.Size = UDim2.new(0.5, -56, 0, 22)
+	end
+
+	local entranceVeil = Util.frame({
+		Name = "EntranceVeil",
+		BackgroundColor3 = theme.Palette.Background,
+		BackgroundTransparency = 0,
+		BorderSizePixel = 0,
+		Size = UDim2.fromScale(1, 1),
+		ZIndex = 100,
+	}, window)
+	Util.paint(entranceVeil, "BackgroundColor3", "Background", theme)
+
+	scale.Scale = initialScale * 0.985
+	Animation.play(scale, theme.Motion.Slow, {
+		Scale = initialScale,
+	}, { easing = "Quart" })
+	Animation.play(entranceVeil, theme.Motion.Normal, {
+		BackgroundTransparency = 1,
+	}, { easing = "Quad" })
+	task.delay(Animation.duration(theme.Motion.Normal) + 0.05, function()
+		if entranceVeil.Parent then
+			entranceVeil:Destroy()
+		end
+	end)
+
+	brandDot.BackgroundTransparency = 1
+	titleLabel.TextTransparency = 1
+	if subtitle then
+		subtitle.TextTransparency = 1
+	end
+	Animation.play(brandDot, theme.Motion.Fast, {
+		BackgroundTransparency = 0,
+	}, { delay = 0.02, easing = "Quad" })
+	Animation.play(titleLabel, theme.Motion.Normal, {
+		TextTransparency = 0,
+	}, { delay = 0.05, easing = "Quad" })
+	if subtitle then
+		Animation.play(subtitle, theme.Motion.Normal, {
+			TextTransparency = 0,
+		}, { delay = 0.09, easing = "Quad" })
 	end
 
 	self.Instance = gui
