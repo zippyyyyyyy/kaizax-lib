@@ -281,7 +281,7 @@ function Window.new(library: any, options: Options): Window
 		Name = "DragRegion",
 		BackgroundTransparency = 1,
 		BorderSizePixel = 0,
-		Size = UDim2.new(1, -340, 0, theme.Window.TopBar),
+		Size = UDim2.new(1, 0, 0, theme.Window.TopBar),
 		Text = "",
 		AutoButtonColor = false,
 		ZIndex = 2,
@@ -707,6 +707,7 @@ function Window.new(library: any, options: Options): Window
 		end
 	end))
 
+	local mouse = game:GetService("Players").LocalPlayer:GetMouse()
 	local dragging = false
 	local dragStartPointer = Vector2.new()
 	local dragStartPosition = UDim2.new()
@@ -732,42 +733,67 @@ function Window.new(library: any, options: Options): Window
 		moveToAbsolute(window.AbsolutePosition)
 	end
 
+	local function beginDrag(pointer: Vector2 | Vector3)
+		if dragging then
+			return
+		end
+		dragging = true
+		dragStartPointer = Vector2.new(pointer.X, pointer.Y)
+		dragStartPosition = window.Position
+	end
+
+	local function endDrag()
+		dragging = false
+	end
+
+	local function updateDrag(pointer: Vector2 | Vector3)
+		if not dragging then
+			return
+		end
+
+		local current = Vector2.new(pointer.X, pointer.Y)
+		local delta = (current - dragStartPointer) / math.max(scale.Scale, 0.01)
+		local targetAbs = gui.AbsolutePosition
+			+ Vector2.new(dragStartPosition.X.Offset, dragStartPosition.Y.Offset) * scale.Scale
+			+ delta * scale.Scale
+		moveToAbsolute(targetAbs)
+	end
+
 	bag:Add(dragButton.InputBegan:Connect(function(input)
 		if input.UserInputType ~= Enum.UserInputType.MouseButton1
 			and input.UserInputType ~= Enum.UserInputType.Touch
 		then
 			return
 		end
+		beginDrag(input.Position)
+	end))
 
-		dragging = true
-		dragStartPointer = input.Position
-		dragStartPosition = window.Position
+	bag:Add(dragButton.MouseButton1Down:Connect(function()
+		beginDrag(Vector2.new(mouse.X, mouse.Y))
 	end))
 
 	bag:Add(UserInputService.InputChanged:Connect(function(input)
-		if not dragging then
-			return
-		end
 		if input.UserInputType ~= Enum.UserInputType.MouseMovement
 			and input.UserInputType ~= Enum.UserInputType.Touch
 		then
 			return
 		end
+		updateDrag(input.Position)
+	end))
 
-		local delta = (input.Position - dragStartPointer) / math.max(scale.Scale, 0.01)
-		local targetAbs = gui.AbsolutePosition
-			+ Vector2.new(dragStartPosition.X.Offset, dragStartPosition.Y.Offset) * scale.Scale
-			+ delta * scale.Scale
-		moveToAbsolute(targetAbs)
+	bag:Add(mouse.Move:Connect(function()
+		updateDrag(Vector2.new(mouse.X, mouse.Y))
 	end))
 
 	bag:Add(UserInputService.InputEnded:Connect(function(input)
 		if input.UserInputType == Enum.UserInputType.MouseButton1
 			or input.UserInputType == Enum.UserInputType.Touch
 		then
-			dragging = false
+			endDrag()
 		end
 	end))
+
+	bag:Add(mouse.Button1Up:Connect(endDrag))
 
 	local resizing = false
 	local resizeStartPointer = Vector2.new()
