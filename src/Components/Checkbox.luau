@@ -48,7 +48,7 @@ function Checkbox.new(
 		Name = "Checkbox",
 		AnchorPoint = Vector2.new(1, 0.5),
 		Position = UDim2.fromScale(1, 0.5),
-		Size = UDim2.fromOffset(18, 18),
+		Size = UDim2.fromOffset(20, 20),
 		AutoButtonColor = false,
 		BorderSizePixel = 0,
 		Text = "",
@@ -66,8 +66,8 @@ function Checkbox.new(
 
 	local short = Util.frame({
 		AnchorPoint = Vector2.new(0.5, 0.5),
-		Position = UDim2.fromOffset(6, 10),
-		Size = UDim2.fromOffset(2, 6),
+		Position = UDim2.fromOffset(7, 11),
+		Size = UDim2.fromOffset(2, 7),
 		Rotation = 45,
 		BorderSizePixel = 0,
 	}, check)
@@ -75,8 +75,8 @@ function Checkbox.new(
 
 	local long = Util.frame({
 		AnchorPoint = Vector2.new(0.5, 0.5),
-		Position = UDim2.fromOffset(10, 9),
-		Size = UDim2.fromOffset(2, 9),
+		Position = UDim2.fromOffset(11, 10),
+		Size = UDim2.fromOffset(2, 10),
 		Rotation = -48,
 		BorderSizePixel = 0,
 	}, check)

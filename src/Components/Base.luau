@@ -66,7 +66,7 @@ function Base.row(
 			Size = 12.5,
 			ColorRole = "TextMuted",
 		})
-		label.Size = UDim2.new(1, -170, 1, 0)
+		label.Size = UDim2.new(1, -200, 1, 0)
 	end
 
 	local slot = Util.frame({

@@ -54,7 +54,7 @@ function TextInput.new(
 	local container = Util.frame({
 		Name = "TextInput",
 		BackgroundTransparency = 1,
-		Size = UDim2.new(1, 0, 0, 56),
+		Size = UDim2.new(1, 0, 0, 60),
 	}, parent)
 
 	local label = Base.text(ctx, container, labelText, {
@@ -69,7 +69,7 @@ function TextInput.new(
 		Name = "Field",
 		AnchorPoint = Vector2.new(0, 1),
 		Position = UDim2.fromScale(0, 1),
-		Size = UDim2.new(1, 0, 0, 30),
+		Size = UDim2.new(1, 0, 0, 32),
 		BackgroundColor3 = theme.Palette.SurfaceRaised,
 		BorderSizePixel = 0,
 		ClearTextOnFocus = false,

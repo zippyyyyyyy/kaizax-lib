@@ -44,7 +44,7 @@ function Search.new(
 		Name = "Search",
 		BackgroundColor3 = theme.Palette.Surface,
 		BorderSizePixel = 0,
-		Size = UDim2.fromOffset(options.Width or 216, options.Height or 28),
+		Size = UDim2.fromOffset(options.Width or 216, options.Height or 32),
 	}, parent)
 
 	Util.corner(frame, theme.Radius.Element)
@@ -56,7 +56,7 @@ function Search.new(
 		Name = "Icon",
 		BackgroundTransparency = 1,
 		Position = UDim2.fromOffset(9, 0),
-		Size = UDim2.fromOffset(14, 28),
+		Size = UDim2.fromOffset(14, 32),
 	}, frame)
 
 	local ring = Util.frame({

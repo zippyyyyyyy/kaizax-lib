@@ -21,8 +21,8 @@ local KIND_ROLE: { [string]: string } = {
 	error = "Danger",
 }
 
-local TOAST_WIDTH = 300
-local TOAST_HEIGHT = 84
+local TOAST_WIDTH = 340
+local TOAST_HEIGHT = 88
 local TOAST_GAP = 8
 local MAX_TOASTS = 4
 
@@ -135,8 +135,8 @@ function Notification.new(
 			Name = "Dot",
 			BackgroundColor3 = theme.Palette[role],
 			BorderSizePixel = 0,
-			Position = UDim2.fromOffset(14, 14),
-			Size = UDim2.fromOffset(6, 6),
+			Position = UDim2.fromOffset(16, 16),
+			Size = UDim2.fromOffset(8, 8),
 		}, frame)
 		Util.corner(dot, 999)
 		Util.paint(dot, "BackgroundColor3", role, theme)
@@ -146,10 +146,10 @@ function Notification.new(
 		local title = Util.label({
 			BackgroundTransparency = 1,
 			Font = theme.Fonts.Bold,
-			Size = UDim2.new(1, -62, 0, 20),
+			Size = UDim2.new(1, -70, 0, 20),
 			Text = options.Title,
 			TextColor3 = theme.Palette.Text,
-			TextSize = 12.5,
+			TextSize = 13,
 			TextXAlignment = Enum.TextXAlignment.Left,
 			TextYAlignment = Enum.TextYAlignment.Center,
 			TextTruncate = Enum.TextTruncate.AtEnd,
@@ -160,11 +160,11 @@ function Notification.new(
 		local messageLabel = Util.label({
 			BackgroundTransparency = 1,
 			Font = theme.Fonts.Regular,
-			Position = UDim2.fromOffset(15, 30),
-			Size = UDim2.new(1, -30, 0, 34),
+			Position = UDim2.fromOffset(16, 32),
+			Size = UDim2.new(1, -32, 0, 38),
 			Text = message,
 			TextColor3 = theme.Palette.TextMuted,
-			TextSize = 12,
+			TextSize = 12.5,
 			TextWrapped = true,
 			TextXAlignment = Enum.TextXAlignment.Left,
 			TextYAlignment = Enum.TextYAlignment.Top,
@@ -219,8 +219,8 @@ function Notification.new(
 				Name = "ProgressTrack",
 				BackgroundColor3 = theme.Palette.Stroke,
 				BorderSizePixel = 0,
-				Position = UDim2.new(0, 14, 1, -8),
-				Size = UDim2.new(1, -28, 0, 2),
+				Position = UDim2.new(0, 16, 1, -10),
+				Size = UDim2.new(1, -32, 0, 2),
 			}, frame)
 			Util.corner(progressTrack, 1)
 			Util.paint(progressTrack, "BackgroundColor3", "Stroke", theme)

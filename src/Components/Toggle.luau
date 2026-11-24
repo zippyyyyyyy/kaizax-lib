@@ -51,7 +51,7 @@ function Toggle.new(
 		Name = "Switch",
 		AnchorPoint = Vector2.new(1, 0.5),
 		Position = UDim2.fromScale(1, 0.5),
-		Size = UDim2.fromOffset(38, 20),
+		Size = UDim2.fromOffset(42, 22),
 		BackgroundColor3 = theme.Palette.SurfaceRaised,
 		AutoButtonColor = false,
 		BorderSizePixel = 0,
@@ -66,7 +66,7 @@ function Toggle.new(
 		Name = "Knob",
 		AnchorPoint = Vector2.new(0, 0.5),
 		Position = UDim2.new(0, 2, 0.5, 0),
-		Size = UDim2.fromOffset(16, 16),
+		Size = UDim2.fromOffset(18, 18),
 		BackgroundColor3 = theme.Palette.TextFaint,
 		BorderSizePixel = 0,
 	}, switch)
@@ -98,7 +98,7 @@ function Toggle.new(
 		ctx.Paint(knob, "BackgroundColor3", knobRole)
 		ctx.Paint(stroke, "Color", if value then "Accent" else "Stroke")
 
-		local knobPosition = UDim2.new(0, if value then 20 else 2, 0.5, 0)
+		local knobPosition = UDim2.new(0, if value then 22 else 2, 0.5, 0)
 		local properties = {
 			BackgroundColor3 = fill,
 			BackgroundTransparency = fillTransparency,

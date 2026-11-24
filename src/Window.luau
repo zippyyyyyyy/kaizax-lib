@@ -173,7 +173,7 @@ function Window.new(library: any, options: Options): Window
 		BackgroundTransparency = 1,
 		BorderSizePixel = 0,
 		Position = UDim2.fromOffset(8, 10),
-		Size = UDim2.new(1, -16, 1, -58),
+		Size = UDim2.new(1, -16, 1, -64),
 		CanvasSize = UDim2.new(),
 		AutomaticCanvasSize = Enum.AutomaticSize.Y,
 		ScrollBarThickness = 3,
@@ -188,7 +188,7 @@ function Window.new(library: any, options: Options): Window
 		BackgroundTransparency = 1,
 		AnchorPoint = Vector2.new(0, 1),
 		Position = UDim2.new(0, 0, 1, 0),
-		Size = UDim2.new(1, 0, 0, 44),
+		Size = UDim2.new(1, 0, 0, 48),
 	}, sidebar)
 
 	local footerLine = Util.frame({
@@ -202,7 +202,7 @@ function Window.new(library: any, options: Options): Window
 	local versionLabel = Util.label({
 		BackgroundTransparency = 1,
 		Font = theme.Fonts.Mono,
-		Position = UDim2.fromOffset(12, 9),
+		Position = UDim2.fromOffset(12, 10),
 		Size = UDim2.new(1, -24, 0, 14),
 		Text = `Kaizax {library.Version}`,
 		TextColor3 = theme.Palette.TextFaint,
@@ -215,7 +215,7 @@ function Window.new(library: any, options: Options): Window
 	local toggleHint = Util.label({
 		BackgroundTransparency = 1,
 		Font = theme.Fonts.Mono,
-		Position = UDim2.fromOffset(12, 23),
+		Position = UDim2.fromOffset(12, 26),
 		Size = UDim2.new(1, -24, 0, 14),
 		Text = if toggleKey then `{toggleKey.Name}  ·  toggle` else "",
 		TextColor3 = theme.Palette.TextFaint,
@@ -255,11 +255,11 @@ function Window.new(library: any, options: Options): Window
 		Name = "BrandDot",
 		BackgroundColor3 = theme.Palette.Accent,
 		BorderSizePixel = 0,
-		Position = UDim2.fromOffset(15, 20),
-		Size = UDim2.fromOffset(8, 8),
+		Position = UDim2.fromOffset(18, 21),
+		Size = UDim2.fromOffset(10, 10),
 		ZIndex = 3,
 	}, topBar)
-	Util.corner(brandDot, 2)
+	Util.corner(brandDot, 3)
 	Util.paint(brandDot, "BackgroundColor3", "Accent", theme)
 
 	local titleLabel = Util.label({
@@ -267,7 +267,7 @@ function Window.new(library: any, options: Options): Window
 		BackgroundTransparency = 1,
 		Font = theme.Fonts.Bold,
 		Position = UDim2.fromOffset(31, 0),
-		Size = UDim2.new(0.5, -31, 1, 0),
+		Size = UDim2.new(0.5, -46, 1, 0),
 		Text = string.upper(options.Title or "Kaizax"),
 		TextColor3 = theme.Palette.Text,
 		TextSize = 13,
@@ -296,7 +296,7 @@ function Window.new(library: any, options: Options): Window
 
 	local searchFrame = search.Instance :: Frame
 	searchFrame.AnchorPoint = Vector2.new(1, 0.5)
-	searchFrame.Position = UDim2.new(1, -92, 0.5, 0)
+	searchFrame.Position = UDim2.new(1, -100, 0.5, 0)
 	searchFrame.ZIndex = 4
 	searchFrame.Visible = false
 
@@ -307,7 +307,7 @@ function Window.new(library: any, options: Options): Window
 			BackgroundTransparency = 1,
 			BorderSizePixel = 0,
 			Position = UDim2.new(1, offset, 0.5, 0),
-			Size = UDim2.fromOffset(28, 28),
+			Size = UDim2.fromOffset(32, 32),
 			Text = "",
 			AutoButtonColor = false,
 			ZIndex = 4,
@@ -316,8 +316,8 @@ function Window.new(library: any, options: Options): Window
 		return button
 	end
 
-	local minimizeButton = makeControlButton("Minimize", -52)
-	local closeButton = makeControlButton("Close", -12)
+	local minimizeButton = makeControlButton("Minimize", -60)
+	local closeButton = makeControlButton("Close", -20)
 
 	local minimizeLine = Util.frame({
 		Name = "MinimizeIcon",
@@ -374,7 +374,7 @@ function Window.new(library: any, options: Options): Window
 	end
 
 	local function updateSearchVisibility()
-		searchFrame.Visible = not minimized and window.Size.X.Offset >= 700
+		searchFrame.Visible = not minimized and window.Size.X.Offset >= 760
 	end
 
 	local function paintTab(target: any, active: boolean, hovered: boolean)
@@ -456,7 +456,7 @@ function Window.new(library: any, options: Options): Window
 			BackgroundColor3 = theme.Palette.Surface,
 			BackgroundTransparency = 0,
 			BorderSizePixel = 0,
-			Size = UDim2.new(1, 0, 0, 36),
+			Size = UDim2.new(1, 0, 0, 40),
 			Text = "",
 			AutoButtonColor = false,
 			LayoutOrder = #tabs,
@@ -467,8 +467,8 @@ function Window.new(library: any, options: Options): Window
 			Name = "Accent",
 			BackgroundColor3 = theme.Palette.Accent,
 			BorderSizePixel = 0,
-			Position = UDim2.fromOffset(0, 9),
-			Size = UDim2.new(0, 2, 0, 18),
+			Position = UDim2.fromOffset(0, 10),
+			Size = UDim2.new(0, 2, 0, 20),
 			Visible = false,
 		}, button)
 		Util.corner(accent, 1)
@@ -975,8 +975,8 @@ function Window.new(library: any, options: Options): Window
 		local subtitle = Util.label({
 			BackgroundTransparency = 1,
 			Font = theme.Fonts.Mono,
-			Position = UDim2.new(0, 31, 0, 24),
-			Size = UDim2.new(0.5, -31, 0, 12),
+			Position = UDim2.new(0, 36, 0, 36),
+			Size = UDim2.new(0.5, -46, 0, 14),
 			Text = options.Subtitle,
 			TextColor3 = theme.Palette.TextFaint,
 			TextSize = 10,
@@ -985,8 +985,8 @@ function Window.new(library: any, options: Options): Window
 			ZIndex = 3,
 		}, topBar)
 		Util.paint(subtitle, "TextColor3", "TextFaint", theme)
-		titleLabel.Position = UDim2.fromOffset(31, 7)
-		titleLabel.Size = UDim2.new(0.5, -31, 0, 18)
+		titleLabel.Position = UDim2.fromOffset(36, 12)
+		titleLabel.Size = UDim2.new(0.5, -46, 0, 22)
 	end
 
 	self.Instance = gui

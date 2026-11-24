@@ -87,14 +87,14 @@ function Keybind.new(
 
 	local row, _, rowLabel = Base.row(ctx, parent, labelText)
 	if rowLabel then
-		rowLabel.Size = UDim2.new(1, if showMode then -176 else -116, 1, 0)
+		rowLabel.Size = UDim2.new(1, if showMode then -204 else -128, 1, 0)
 	end
 
 	local bindButton = Util.textButton({
 		Name = "Bind",
 		AnchorPoint = Vector2.new(1, 0.5),
 		Position = UDim2.fromScale(1, 0.5),
-		Size = UDim2.fromOffset(104, 26),
+		Size = UDim2.fromOffset(120, 32),
 		AutoButtonColor = false,
 		BorderSizePixel = 0,
 		Text = "",
@@ -119,8 +119,8 @@ function Keybind.new(
 		modeButton = Util.textButton({
 			Name = "Mode",
 			AnchorPoint = Vector2.new(1, 0.5),
-			Position = UDim2.new(1, -110, 0.5, 0),
-			Size = UDim2.fromOffset(52, 26),
+			Position = UDim2.new(1, -128, 0.5, 0),
+			Size = UDim2.fromOffset(60, 32),
 			AutoButtonColor = false,
 			BorderSizePixel = 0,
 			Text = "",

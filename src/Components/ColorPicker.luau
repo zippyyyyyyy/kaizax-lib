@@ -79,7 +79,7 @@ function ColorPicker.new(
 
 	local row, _, rowLabel = Base.row(ctx, parent, labelText)
 	if rowLabel then
-		rowLabel.Size = UDim2.new(1, -122, 1, 0)
+		rowLabel.Size = UDim2.new(1, -132, 1, 0)
 	end
 
 	local hexLabel = Base.text(ctx, row, Util.hex(color), {
@@ -89,14 +89,14 @@ function ColorPicker.new(
 		XAlign = Enum.TextXAlignment.Right,
 	})
 	hexLabel.AnchorPoint = Vector2.new(1, 0.5)
-	hexLabel.Position = UDim2.new(1, -38, 0.5, 0)
-	hexLabel.Size = UDim2.fromOffset(66, 20)
+	hexLabel.Position = UDim2.new(1, -40, 0.5, 0)
+	hexLabel.Size = UDim2.fromOffset(72, 20)
 
 	local swatch = Util.textButton({
 		Name = "Swatch",
 		AnchorPoint = Vector2.new(1, 0.5),
 		Position = UDim2.fromScale(1, 0.5),
-		Size = UDim2.fromOffset(30, 22),
+		Size = UDim2.fromOffset(32, 24),
 		BackgroundTransparency = 1,
 		BorderSizePixel = 0,
 		Text = "",
@@ -105,7 +105,7 @@ function ColorPicker.new(
 		ClipsDescendants = true,
 	}, row)
 
-	Util.corner(swatch, 5)
+	Util.corner(swatch, 6)
 	local swatchStroke = Util.stroke(swatch, 1)
 	ctx.Paint(swatchStroke, "Color", "StrokeStrong")
 

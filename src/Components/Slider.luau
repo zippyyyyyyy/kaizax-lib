@@ -72,7 +72,7 @@ function Slider.new(
 	local row = Util.frame({
 		Name = "Slider",
 		BackgroundTransparency = 1,
-		Size = UDim2.new(1, 0, 0, 44),
+		Size = UDim2.new(1, 0, 0, 48),
 	}, parent)
 
 	local label = Base.text(ctx, row, labelText, {
@@ -96,8 +96,8 @@ function Slider.new(
 	local trackHit = Util.textButton({
 		Name = "TrackHit",
 		BackgroundTransparency = 1,
-		Size = UDim2.new(1, 0, 0, 18),
-		Position = UDim2.new(0, 0, 1, -18),
+		Size = UDim2.new(1, 0, 0, 20),
+		Position = UDim2.new(0, 0, 1, -20),
 		Text = "",
 		AutoButtonColor = false,
 		Active = not disabled,
@@ -106,8 +106,8 @@ function Slider.new(
 	local track = Util.frame({
 		Name = "Track",
 		AnchorPoint = Vector2.new(0, 0.5),
-		Position = UDim2.new(0, 5, 0.5, 0),
-		Size = UDim2.new(1, -10, 0, 4),
+		Position = UDim2.new(0, 6, 0.5, 0),
+		Size = UDim2.new(1, -12, 0, 6),
 		BorderSizePixel = 0,
 	}, trackHit)
 
@@ -127,7 +127,7 @@ function Slider.new(
 		Name = "Knob",
 		AnchorPoint = Vector2.new(0.5, 0.5),
 		Position = UDim2.fromScale(0, 0.5),
-		Size = UDim2.fromOffset(12, 12),
+		Size = UDim2.fromOffset(14, 14),
 		BorderSizePixel = 0,
 		ZIndex = 3,
 	}, track)
@@ -138,7 +138,7 @@ function Slider.new(
 		Name = "Core",
 		AnchorPoint = Vector2.new(0.5, 0.5),
 		Position = UDim2.fromScale(0.5, 0.5),
-		Size = UDim2.fromOffset(4, 4),
+		Size = UDim2.fromOffset(5, 5),
 		BorderSizePixel = 0,
 	}, knob)
 

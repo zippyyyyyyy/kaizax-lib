@@ -73,7 +73,7 @@ function MultiDropdown.new(
 		Name = "MultiDropdown",
 		AnchorPoint = Vector2.new(1, 0.5),
 		Position = UDim2.fromScale(1, 0.5),
-		Size = UDim2.fromOffset(158, 26),
+		Size = UDim2.fromOffset(184, 32),
 		AutoButtonColor = false,
 		BorderSizePixel = 0,
 		Text = "",
@@ -85,7 +85,7 @@ function MultiDropdown.new(
 
 	local valueLabel = Base.text(ctx, button, placeholder, {
 		Font = theme.Fonts.Mono,
-		Size = 12,
+		Size = 12.5,
 		ColorRole = "TextFaint",
 		XAlign = Enum.TextXAlignment.Left,
 	})
@@ -94,7 +94,7 @@ function MultiDropdown.new(
 
 	local chevron = Base.chevron(ctx, button, "TextFaint")
 	chevron.AnchorPoint = Vector2.new(1, 0.5)
-	chevron.Position = UDim2.new(1, -8, 0.5, 0)
+	chevron.Position = UDim2.new(1, -10, 0.5, 0)
 
 	local function paintChevron(role: string)
 		for _, bar in chevron:GetChildren() do

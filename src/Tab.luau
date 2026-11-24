@@ -53,24 +53,24 @@ function Tab.new(
 	local header = Util.frame({
 		Name = "Header",
 		BackgroundTransparency = 1,
-		Size = UDim2.new(1, 0, 0, 76),
+		Size = UDim2.new(1, 0, 0, 92),
 	}, root)
 
 	local title = Base.text(ctx, header, titleText, {
 		Font = theme.Fonts.Bold,
-		Size = 22,
+		Size = 24,
 		ColorRole = "Text",
 	})
-	title.Position = UDim2.fromOffset(20, 14)
-	title.Size = UDim2.new(0.58, -20, 0, 28)
+	title.Position = UDim2.fromOffset(24, 18)
+	title.Size = UDim2.new(0.56, -24, 0, 30)
 
 	local subtitle = Base.text(ctx, header, description, {
 		Font = theme.Fonts.Regular,
-		Size = 12,
+		Size = 12.5,
 		ColorRole = "TextMuted",
 	})
-	subtitle.Position = UDim2.fromOffset(20, 44)
-	subtitle.Size = UDim2.new(0.58, -20, 0, 18)
+	subtitle.Position = UDim2.fromOffset(24, 50)
+	subtitle.Size = UDim2.new(0.56, -24, 0, 18)
 	subtitle.Visible = description ~= ""
 
 	local bar = Util.frame({
@@ -79,15 +79,15 @@ function Tab.new(
 		AutomaticSize = Enum.AutomaticSize.X,
 		BackgroundColor3 = theme.Palette.Surface,
 		BorderSizePixel = 0,
-		Position = UDim2.new(1, -20, 0, 16),
-		Size = UDim2.fromOffset(0, 30),
+		Position = UDim2.new(1, -24, 0, 20),
+		Size = UDim2.fromOffset(0, 32),
 		Visible = false,
 	}, header)
 	Util.corner(bar, 6)
 	local barStroke = Util.stroke(bar, 1)
 	ctx.Paint(bar, "BackgroundColor3", "Surface")
 	ctx.Paint(barStroke, "Color", "Stroke")
-	Util.padding(bar, 3, 3)
+	Util.padding(bar, 4, 4)
 
 	local barLayout = Util.list(bar, 2, Enum.FillDirection.Horizontal)
 	barLayout.VerticalAlignment = Enum.VerticalAlignment.Center
@@ -96,7 +96,7 @@ function Tab.new(
 		Name = "Divider",
 		BackgroundColor3 = theme.Palette.Stroke,
 		BorderSizePixel = 0,
-		Position = UDim2.fromOffset(0, 76),
+		Position = UDim2.fromOffset(0, 92),
 		Size = UDim2.new(1, 0, 0, 1),
 	}, root)
 	ctx.Paint(divider, "BackgroundColor3", "Stroke")
@@ -104,8 +104,8 @@ function Tab.new(
 	local body = Util.frame({
 		Name = "Body",
 		BackgroundTransparency = 1,
-		Position = UDim2.fromOffset(0, 77),
-		Size = UDim2.new(1, 0, 1, -77),
+		Position = UDim2.fromOffset(0, 93),
+		Size = UDim2.new(1, 0, 1, -93),
 	}, root)
 
 	local empty = Base.text(ctx, body, "No controls match your search.", {
@@ -171,7 +171,7 @@ function Tab.new(
 			BackgroundTransparency = 1,
 			BorderSizePixel = 0,
 			LayoutOrder = #subtabs,
-			Size = UDim2.fromOffset(0, 24),
+			Size = UDim2.fromOffset(0, 28),
 			Text = "",
 			AutoButtonColor = false,
 		}, bar)
@@ -179,13 +179,13 @@ function Tab.new(
 
 		local label = Base.text(ctx, button, name, {
 			Font = theme.Fonts.Medium,
-			Size = 11.5,
+			Size = 12.5,
 			ColorRole = "TextMuted",
 			XAlign = Enum.TextXAlignment.Center,
 		})
 		label.AutomaticSize = Enum.AutomaticSize.X
 		label.Size = UDim2.new(0, 0, 1, 0)
-		Util.padding(button, 10, 0)
+		Util.padding(button, 12, 0)
 
 		buttons[subtab] = {
 			button = button,

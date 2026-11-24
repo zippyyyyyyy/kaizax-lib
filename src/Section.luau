@@ -98,19 +98,19 @@ function Section.new(
 	local stroke = Util.stroke(root, 1)
 	baseCtx.Paint(root, "BackgroundColor3", "Surface")
 	baseCtx.Paint(stroke, "Color", "Stroke")
-	Util.padding(root, 16, 16)
+	Util.padding(root, 24, 20)
 	Util.list(root, 8)
 
 	local header = Util.frame({
 		Name = "Header",
 		BackgroundTransparency = 1,
 		LayoutOrder = 0,
-		Size = UDim2.new(1, 0, 0, 20),
+		Size = UDim2.new(1, 0, 0, 24),
 	}, root)
 
 	local title = Base.text(baseCtx, header, titleText, {
 		Font = theme.Fonts.Medium,
-		Size = 13,
+		Size = 14,
 		ColorRole = "Text",
 	})
 	title.Position = UDim2.fromOffset(0, 0)
@@ -139,7 +139,7 @@ function Section.new(
 		AutomaticSize = Enum.AutomaticSize.Y,
 	}, root)
 
-	Util.list(content, 4)
+	Util.list(content, 8)
 
 	local function register(row: GuiObject, searchText: string?)
 		table.insert(entries, {
@@ -276,7 +276,7 @@ function Section.new(
 		local opts: LabelOptions = asOptions(value, "Text")
 		local label = Base.text(ctx, content, opts.Text, {
 			Font = theme.Fonts.Regular,
-			Size = opts.Size or 12,
+			Size = opts.Size or 12.5,
 			ColorRole = opts.ColorRole or "TextMuted",
 		})
 		label.LayoutOrder = nextOrder()
@@ -289,7 +289,7 @@ function Section.new(
 		local opts: ParagraphOptions = asOptions(value, "Text")
 		local paragraph = Base.text(ctx, content, opts.Text, {
 			Font = theme.Fonts.Regular,
-			Size = opts.Size or 12,
+			Size = opts.Size or 12.5,
 			ColorRole = opts.ColorRole or "TextMuted",
 			Wrapped = true,
 		})
@@ -328,7 +328,7 @@ function Section.new(
 		local kind: Types.StatusKind = opts.Kind or "neutral"
 		local pulseEnabled = opts.Pulse == true
 
-		local row, _, statusLabel = Base.row(ctx, content, opts.Text, 26)
+		local row, _, statusLabel = Base.row(ctx, content, opts.Text, 32)
 		row.LayoutOrder = nextOrder()
 		row.Name = "Status"
 		if statusLabel then

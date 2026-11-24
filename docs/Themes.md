@@ -160,9 +160,9 @@ Mono is reserved for numeric readouts, version text, and the toggle-key hint. Ti
 
 | Token | Default |
 | --- | --- |
-| `Window` | 10 |
-| `Card` | 8 |
-| `Element` | 5 |
+| `Window` | 12 |
+| `Card` | 10 |
+| `Element` | 6 |
 | `Pill` | 999 |
 
 ### Spacing
@@ -173,8 +173,8 @@ Mono is reserved for numeric readouts, version text, and the toggle-key hint. Ti
 | `S` | 8 |
 | `M` | 12 |
 | `L` | 16 |
-| `XL` | 22 |
-| `XXL` | 30 |
+| `XL` | 24 |
+| `XXL` | 32 |
 
 Layouts use a 4px rhythm. Section padding is 16px, card gaps are 8px, and control rows are 36px tall.
 
@@ -182,15 +182,15 @@ Layouts use a 4px rhythm. Section padding is 16px, card gaps are 8px, and contro
 
 | Token | Default |
 | --- | --- |
-| `Width` | 900 |
-| `Height` | 620 |
-| `MinWidth` | 680 |
-| `MinHeight` | 480 |
-| `Sidebar` | 200 |
-| `TopBar` | 48 |
-| `PageHeader` | 76 |
-| `Padding` | 20 |
-| `RowHeight` | 36 |
+| `Width` | 960 |
+| `Height` | 680 |
+| `MinWidth` | 720 |
+| `MinHeight` | 520 |
+| `Sidebar` | 224 |
+| `TopBar` | 52 |
+| `PageHeader` | 92 |
+| `Padding` | 24 |
+| `RowHeight` | 40 |
 
 Window metrics are read when a window is built. Changing them later affects new windows.
 
@@ -198,10 +198,10 @@ Window metrics are read when a window is built. Changing them later affects new 
 
 | Token | Default |
 | --- | --- |
-| `Fast` | 0.12 |
-| `Normal` | 0.2 |
-| `Slow` | 0.34 |
-| `Notification` | 0.4 |
+| `Fast` | 0.14 |
+| `Normal` | 0.22 |
+| `Slow` | 0.36 |
+| `Notification` | 0.42 |
 
 All tween durations pass through `Animation.duration`. When `GuiService.ReducedMotionEnabled` is true, animations apply their final state immediately.
 

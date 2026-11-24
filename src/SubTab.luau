@@ -53,8 +53,8 @@ function SubTab.new(
 		Name = "Content",
 		AutomaticSize = Enum.AutomaticSize.Y,
 		BackgroundTransparency = 1,
-		Position = UDim2.fromOffset(20, 16),
-		Size = UDim2.new(1, -40, 0, 0),
+		Position = UDim2.fromOffset(24, 20),
+		Size = UDim2.new(1, -48, 0, 0),
 	}, scroller)
 
 	Util.list(holder, 0)
@@ -70,7 +70,7 @@ function SubTab.new(
 		FillDirection = Enum.FillDirection.Horizontal,
 		HorizontalAlignment = Enum.HorizontalAlignment.Center,
 		VerticalAlignment = Enum.VerticalAlignment.Top,
-		Padding = UDim.new(0, 12),
+		Padding = UDim.new(0, 16),
 		SortOrder = Enum.SortOrder.LayoutOrder,
 	}, columnHolder)
 
@@ -82,7 +82,7 @@ function SubTab.new(
 			LayoutOrder = index,
 			Size = UDim2.new(0.5, -6, 0, 0),
 		}, columnHolder)
-		Util.list(column, 12)
+		Util.list(column, 16)
 		return column
 	end
 
@@ -99,7 +99,7 @@ function SubTab.new(
 		Name = "BottomSpace",
 		BackgroundTransparency = 1,
 		LayoutOrder = 2,
-		Size = UDim2.new(1, 0, 0, 16),
+		Size = UDim2.new(1, 0, 0, 24),
 	}, holder)
 
 	local subtab = setmetatable({} :: any, SubTab) :: SubTab
