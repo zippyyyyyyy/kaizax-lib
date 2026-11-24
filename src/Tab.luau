@@ -285,9 +285,9 @@ function Tab.new(
 			return
 		end
 
-		local motion = ctx.GetTheme().Motion.Fast
+		local motion = ctx.GetTheme().Motion.Slow
 		local bodyY = theme.Window.PageHeader + 1
-		body.Position = UDim2.fromOffset(0, bodyY + 8)
+		body.Position = UDim2.fromOffset(0, bodyY + 10)
 		title.Position = UDim2.fromOffset(20, 16)
 		subtitle.Position = UDim2.fromOffset(20, 58)
 		title.TextTransparency = 0.45
@@ -295,15 +295,15 @@ function Tab.new(
 
 		Animation.play(body, motion, {
 			Position = UDim2.fromOffset(0, bodyY),
-		}, { easing = "Quart" })
+		}, { easing = "Sine", direction = "InOut" })
 		Animation.play(title, motion, {
 			Position = UDim2.fromOffset(24, 16),
 			TextTransparency = 0,
-		}, { easing = "Quart" })
+		}, { easing = "Sine", direction = "InOut" })
 		Animation.play(subtitle, motion, {
 			Position = UDim2.fromOffset(24, 58),
 			TextTransparency = 0,
-		}, { easing = "Quart" })
+		}, { easing = "Sine", direction = "InOut" })
 	end
 
 	function tab:_ApplySearch(query: string): boolean

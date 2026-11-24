@@ -146,10 +146,10 @@ function SubTab.new(
 		scroller.Visible = value
 
 		if value and not wasActive then
-			holder.Position = UDim2.fromOffset(24, 26)
-			Animation.play(holder, ctx.GetTheme().Motion.Fast, {
+			holder.Position = UDim2.fromOffset(24, 28)
+			Animation.play(holder, ctx.GetTheme().Motion.Slow, {
 				Position = UDim2.fromOffset(24, 20),
-			}, { easing = "Quart" })
+			}, { easing = "Sine", direction = "InOut" })
 		elseif not value then
 			holder.Position = UDim2.fromOffset(24, 20)
 		end

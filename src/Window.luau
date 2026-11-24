@@ -417,11 +417,20 @@ function Window.new(library: any, options: Options): Window
 		return (order - 1) * 40 + 9 - tabScroller.CanvasPosition.Y
 	end
 
+	local indicatorMove: Tween? = nil
+	local indicatorPulse: Tween? = nil
+	local indicatorGeneration = 0
+
 	local function moveIndicator(target: any, animate: boolean)
 		local entry = tabButtons[target]
 		if not entry then
 			return
 		end
+
+		indicatorGeneration += 1
+		local generation = indicatorGeneration
+		Animation.cancel(indicatorMove)
+		Animation.cancel(indicatorPulse)
 
 		local y = indicatorY(entry.order)
 		if not animate or not activeIndicator.Visible then
@@ -431,11 +440,23 @@ function Window.new(library: any, options: Options): Window
 			return
 		end
 
-		activeIndicator.Size = UDim2.fromOffset(3, 24)
-		Animation.play(activeIndicator, library:_GetTheme().Motion.Normal, {
+		local smooth = library:_GetTheme().Motion.Slow
+		local pulse = Animation.duration(smooth / 2)
+		indicatorMove = Animation.play(activeIndicator, smooth, {
 			Position = UDim2.fromOffset(0, y),
-			Size = UDim2.fromOffset(3, 18),
-		}, { easing = "Quart" })
+		}, { easing = "Sine", direction = "InOut" })
+		indicatorPulse = Animation.play(activeIndicator, pulse, {
+			Size = UDim2.fromOffset(3, 22),
+		}, { easing = "Sine", direction = "InOut" })
+
+		task.delay(pulse, function()
+			if generation ~= indicatorGeneration then
+				return
+			end
+			indicatorPulse = Animation.play(activeIndicator, pulse, {
+				Size = UDim2.fromOffset(3, 18),
+			}, { easing = "Sine", direction = "InOut" })
+		end)
 	end
 
 	bag:Add(tabScroller:GetPropertyChangedSignal("CanvasPosition"):Connect(function()
@@ -456,13 +477,13 @@ function Window.new(library: any, options: Options): Window
 		Util.paint(entry.button, "BackgroundColor3", backgroundRole, current)
 		Util.paint(entry.label, "TextColor3", labelRole, current)
 
-		Animation.play(entry.button, current.Motion.Fast, {
+		Animation.play(entry.button, current.Motion.Normal, {
 			BackgroundColor3 = (current.Palette :: any)[backgroundRole],
-		}, { easing = "Quad" })
-		Animation.play(entry.label, current.Motion.Fast, {
+		}, { easing = "Sine", direction = "InOut" })
+		Animation.play(entry.label, current.Motion.Normal, {
 			TextColor3 = (current.Palette :: any)[labelRole],
 			Position = UDim2.fromOffset(labelX, 0),
-		}, { easing = "Quart" })
+		}, { easing = "Sine", direction = "InOut" })
 	end
 
 	local function selectTab(target: any)
