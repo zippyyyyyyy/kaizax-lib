@@ -432,16 +432,31 @@ function Section.new(
 			})
 		end
 
-		local function paintStatus()
+		local function paintStatus(animate: boolean?)
 			local role = STATUS_ROLES[kind] or "TextMuted"
-			ctx.Paint(dot, "BackgroundColor3", role)
-			ctx.Paint(valueLabel, "TextColor3", role)
-			dot.BackgroundColor3 = ctx.Color(role)
-			valueLabel.TextColor3 = ctx.Color(role)
+			local color = ctx.Color(role)
+
+			if animate then
+				Util.paint(dot, "BackgroundColor3", role)
+				Util.paint(valueLabel, "TextColor3", role)
+				local motion = Animation.MOTION.Status
+				Animation.play(dot, motion.Duration, {
+					BackgroundColor3 = color,
+				}, { easing = motion.Easing, direction = motion.Direction })
+				Animation.play(valueLabel, motion.Duration, {
+					TextColor3 = color,
+				}, { easing = motion.Easing, direction = motion.Direction })
+			else
+				ctx.Paint(dot, "BackgroundColor3", role)
+				ctx.Paint(valueLabel, "TextColor3", role)
+				dot.BackgroundColor3 = color
+				valueLabel.TextColor3 = color
+			end
 			applyPulse()
 		end
 
-		paintStatus()
+		dot:SetAttribute("KaizaxStatusDot", true)
+		paintStatus(false)
 
 		local status = {} :: Status
 		status.Instance = row
@@ -454,7 +469,7 @@ function Section.new(
 			if nextPulse ~= nil then
 				pulseEnabled = nextPulse
 			end
-			paintStatus()
+			paintStatus(true)
 		end
 
 		function status:SetVisible(visible: boolean)

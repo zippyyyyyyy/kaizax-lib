@@ -66,17 +66,35 @@ return function(Library: any)
 		return `#{color:ToHex()}`
 	end
 
-	session:CreateButton({
+	local healthButton: any = nil
+	local checkToken = 0
+
+	healthButton = session:CreateButton({
 		Text = "Run health check",
 		Variant = "Primary",
 		Callback = function()
-			interfaceStatus:SetStatus("Stable", "success", false)
-			report("Checked just now")
-			window:Notify({
-				Title = "Health check complete",
-				Message = "The interface accepted the latest interaction.",
-				Kind = "success",
-			})
+			checkToken += 1
+			local token = checkToken
+			healthButton:SetText("Checking...")
+			healthButton:Sweep(true)
+
+			task.delay(0.7, function()
+				if token ~= checkToken or not healthButton.Instance.Parent then
+					return
+				end
+				healthButton:Sweep(false)
+				healthButton:SetText("Checked just now")
+				if healthButton.Instance.Visible then
+					healthButton:Flash()
+				end
+				interfaceStatus:SetStatus("Stable", "success", false)
+				report("Checked just now")
+				window:Notify({
+					Title = "Health check complete",
+					Message = "The interface accepted the latest interaction.",
+					Kind = "success",
+				})
+			end)
 		end,
 	})
 

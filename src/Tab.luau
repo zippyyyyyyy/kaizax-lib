@@ -23,6 +23,8 @@ export type Tab = {
 	SelectSubTab: (self: Tab, target: any) -> (),
 	GetSubTabs: (self: Tab) -> { any },
 	SetVisible: (self: Tab, visible: boolean) -> (),
+	PlayIntro: (self: Tab, animate: boolean?) -> (),
+	StopTransition: (self: Tab) -> (),
 	Destroy: (self: Tab) -> (),
 }
 
@@ -277,34 +279,214 @@ function Tab.new(
 		return subtabs
 	end
 
+	local finalBodyPosition = UDim2.fromOffset(0, theme.Window.PageHeader + 1)
+	local finalTitlePosition = UDim2.fromOffset(24, 16)
+	local finalSubtitlePosition = UDim2.fromOffset(24, 58)
+	local transitionId = 0
+	local transitionState = "idle"
+	local sectionFinals: { [Instance]: UDim2 } = {}
+
+	local function stopPageMotion()
+		transitionId += 1
+		Animation.stopTagged(root, "KaizaxPage")
+	end
+
+	local function pageSections(): { any }
+		local result: { any } = {}
+		if current then
+			for _, section in current:_GetSections() do
+				if section.Instance and section.Instance.Visible and #result < 5 then
+					result[#result + 1] = section
+				end
+			end
+		end
+		return result
+	end
+
+	local function restorePage()
+		body.Position = finalBodyPosition
+		title.Position = finalTitlePosition
+		subtitle.Position = finalSubtitlePosition
+		Animation.fade(header, 1, { Duration = 0, Tag = "KaizaxPage" })
+		Animation.fade(divider, 1, { Duration = 0, Tag = "KaizaxPage" })
+		Animation.fade(empty, 1, { Duration = 0, Tag = "KaizaxPage" })
+		for _, section in pageSections() do
+			Animation.fade(section.Instance, 1, { Duration = 0, Tag = "KaizaxPage" })
+		end
+	end
+
+	local function playEnter(animate: boolean?)
+		local continueEnter = transitionState == "enter"
+		stopPageMotion()
+		local generation = transitionId
+		transitionState = "enter"
+		root.Visible = true
+
+		local sections = pageSections()
+		if not animate or not Animation.enabled() or Animation.reducedMotion() then
+			restorePage()
+			transitionState = "idle"
+			return
+		end
+
+		local enter = Animation.MOTION.Enter
+		if not continueEnter then
+			body.Position = UDim2.fromOffset(0, finalBodyPosition.Y.Offset + 12)
+			title.Position = UDim2.fromOffset(finalTitlePosition.X.Offset - 6, finalTitlePosition.Y.Offset)
+			subtitle.Position = UDim2.fromOffset(finalSubtitlePosition.X.Offset - 6, finalSubtitlePosition.Y.Offset)
+			Animation.fade(header, 0, { Duration = 0, Tag = "KaizaxPage" })
+			Animation.fade(divider, 0, { Duration = 0, Tag = "KaizaxPage" })
+			Animation.fade(empty, 0, { Duration = 0, Tag = "KaizaxPage" })
+			for _, section in sections do
+				Animation.fade(section.Instance, 0, { Duration = 0, Tag = "KaizaxPage" })
+			end
+		end
+
+		Animation.fade(header, 1, {
+			Duration = enter.Duration,
+			Easing = enter.Easing,
+			Direction = enter.Direction,
+			Tag = "KaizaxPage",
+		})
+		Animation.fade(divider, 1, {
+			Duration = enter.Duration,
+			Easing = enter.Easing,
+			Direction = enter.Direction,
+			Tag = "KaizaxPage",
+		})
+		Animation.fade(empty, 1, {
+			Duration = enter.Duration,
+			Easing = enter.Easing,
+			Direction = enter.Direction,
+			Tag = "KaizaxPage",
+		})
+
+		Animation.play(title, enter.Duration, {
+			Position = finalTitlePosition,
+		}, { easing = enter.Easing, direction = enter.Direction, tag = "KaizaxPage" })
+		Animation.play(subtitle, enter.Duration, {
+			Position = finalSubtitlePosition,
+		}, { easing = enter.Easing, direction = enter.Direction, tag = "KaizaxPage" })
+		Animation.play(body, enter.Duration, {
+			Position = finalBodyPosition,
+		}, { easing = enter.Easing, direction = enter.Direction, tag = "KaizaxPage" })
+
+		for index, section in sections do
+			local finalPosition = sectionFinals[section.Instance] or Animation.integer(section.Instance.Position)
+			sectionFinals[section.Instance] = finalPosition
+			local startPosition = UDim2.new(
+				finalPosition.X.Scale,
+				finalPosition.X.Offset,
+				finalPosition.Y.Scale,
+				finalPosition.Y.Offset + 8
+			)
+			if not continueEnter then
+				section.Instance.Position = startPosition
+			end
+			local delay = (index - 1) * Animation.MOTION.Stagger
+			Animation.fade(section.Instance, 1, {
+				Duration = enter.Duration,
+				Easing = enter.Easing,
+				Direction = enter.Direction,
+				Delay = delay,
+				Tag = "KaizaxPage",
+			})
+			Animation.play(section.Instance, enter.Duration, {
+				Position = finalPosition,
+			}, {
+				easing = enter.Easing,
+				direction = enter.Direction,
+				delay = delay,
+				tag = "KaizaxPage",
+			})
+			task.delay(enter.Duration + delay + 0.02, function()
+				if generation == transitionId and section.Instance.Parent then
+					section.Instance.Position = finalPosition
+				end
+			end)
+		end
+
+		task.delay(enter.Duration + (#sections * Animation.MOTION.Stagger) + 0.03, function()
+			if generation == transitionId then
+				restorePage()
+				transitionState = "idle"
+			end
+		end)
+	end
+
+	local function playExit(animate: boolean?)
+		stopPageMotion()
+		local generation = transitionId
+		if not root.Visible then
+			restorePage()
+			return
+		end
+
+		if not animate or not Animation.enabled() or Animation.reducedMotion() then
+			root.Visible = false
+			restorePage()
+			transitionState = "idle"
+			return
+		end
+
+		transitionState = "exit"
+		local exit = Animation.MOTION.Exit
+		local sections = pageSections()
+
+		Animation.fade(header, 0, {
+			Duration = exit.Duration,
+			Easing = exit.Easing,
+			Direction = exit.Direction,
+			Tag = "KaizaxPage",
+		})
+		Animation.fade(divider, 0, {
+			Duration = exit.Duration,
+			Easing = exit.Easing,
+			Direction = exit.Direction,
+			Tag = "KaizaxPage",
+		})
+		Animation.fade(empty, 0, {
+			Duration = exit.Duration,
+			Easing = exit.Easing,
+			Direction = exit.Direction,
+			Tag = "KaizaxPage",
+		})
+		for _, section in sections do
+			Animation.fade(section.Instance, 0, {
+				Duration = exit.Duration,
+				Easing = exit.Easing,
+				Direction = exit.Direction,
+				Tag = "KaizaxPage",
+			})
+		end
+		Animation.play(body, exit.Duration, {
+			Position = UDim2.fromOffset(0, finalBodyPosition.Y.Offset + 8),
+		}, { easing = exit.Easing, direction = exit.Direction, tag = "KaizaxPage" })
+
+		task.delay(exit.Duration + 0.02, function()
+			if generation == transitionId then
+				root.Visible = false
+				restorePage()
+				transitionState = "idle"
+			end
+		end)
+	end
+
 	function tab:SetVisible(visible: boolean)
-		if root.Visible == visible then
-			return
+		if visible then
+			playEnter(true)
+		else
+			playExit(true)
 		end
-		root.Visible = visible
-		if not visible then
-			return
-		end
+	end
 
-		local motion = ctx.GetTheme().Motion.Slow
-		local bodyY = theme.Window.PageHeader + 1
-		body.Position = UDim2.fromOffset(0, bodyY + 10)
-		title.Position = UDim2.fromOffset(20, 16)
-		subtitle.Position = UDim2.fromOffset(20, 58)
-		title.TextTransparency = 0.45
-		subtitle.TextTransparency = 0.45
+	function tab:PlayIntro(animate: boolean?)
+		playEnter(animate)
+	end
 
-		Animation.play(body, motion, {
-			Position = UDim2.fromOffset(0, bodyY),
-		}, { easing = "Sine", direction = "InOut" })
-		Animation.play(title, motion, {
-			Position = UDim2.fromOffset(24, 16),
-			TextTransparency = 0,
-		}, { easing = "Sine", direction = "InOut" })
-		Animation.play(subtitle, motion, {
-			Position = UDim2.fromOffset(24, 58),
-			TextTransparency = 0,
-		}, { easing = "Sine", direction = "InOut" })
+	function tab:StopTransition()
+		stopPageMotion()
+		transitionState = "idle"
 	end
 
 	function tab:_ApplySearch(query: string): boolean

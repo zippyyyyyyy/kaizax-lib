@@ -49,6 +49,7 @@ function Search.new(
 
 	Util.corner(frame, theme.Radius.Element)
 	local stroke = Util.stroke(frame, 1)
+	local strokeTransparency = stroke.Transparency
 	ctx.Paint(frame, "BackgroundColor3", "Surface")
 	ctx.Paint(stroke, "Color", "Stroke")
 
@@ -136,40 +137,50 @@ function Search.new(
 	}, clearButton)
 	ctx.Paint(barTwo, "BackgroundColor3", "TextMuted")
 
-	local function paintIcon(role: string)
-		ctx.Paint(ringStroke, "Color", role)
-		ctx.Paint(handle, "BackgroundColor3", role)
+	local function paintIcon(role: string, animate: boolean)
+		if animate then
+			Util.paint(ringStroke, "Color", role)
+			Util.paint(handle, "BackgroundColor3", role)
+		else
+			ctx.Paint(ringStroke, "Color", role)
+			ctx.Paint(handle, "BackgroundColor3", role)
+		end
 	end
 
 	local function apply(animate: boolean)
-		local current = ctx.GetTheme()
 		local targetFrame = if focused then "SurfaceRaised" elseif hovered then "Hover" else "Surface"
 		local targetStroke = if focused then "Accent" elseif hovered then "StrokeStrong" else "Stroke"
+		local targetStrokeTransparency = if focused then 0 elseif hovered then 0.06 else strokeTransparency
 		local iconRole = if focused then "Accent" elseif hovered then "TextMuted" else "TextFaint"
 
-		ctx.Paint(frame, "BackgroundColor3", targetFrame)
-		ctx.Paint(stroke, "Color", targetStroke)
-		paintIcon(iconRole)
-
 		if animate then
-			Animation.play(frame, current.Motion.Fast, {
+			Util.paint(frame, "BackgroundColor3", targetFrame)
+			Util.paint(stroke, "Color", targetStroke)
+			paintIcon(iconRole, true)
+
+			Animation.play(frame, Animation.MOTION.Hover.Duration, {
 				BackgroundColor3 = ctx.Color(targetFrame),
 			}, { easing = "Quad" })
-			Animation.play(stroke, current.Motion.Fast, {
+			Animation.play(stroke, Animation.MOTION.Hover.Duration, {
 				Color = ctx.Color(targetStroke),
-			}, { easing = "Quad" })
-			Animation.play(ringStroke, current.Motion.Fast, {
+				Transparency = targetStrokeTransparency,
+			}, { easing = Animation.MOTION.Hover.Easing })
+			Animation.play(ringStroke, Animation.MOTION.Hover.Duration, {
 				Color = ctx.Color(iconRole),
 			}, { easing = "Quad" })
-			Animation.play(handle, current.Motion.Fast, {
+			Animation.play(handle, Animation.MOTION.Hover.Duration, {
 				BackgroundColor3 = ctx.Color(iconRole),
 			}, { easing = "Quad" })
-			Animation.play(iconScale, current.Motion.Normal, {
+			Animation.play(iconScale, Animation.MOTION.Press.Duration, {
 				Scale = if focused then 1.08 else 1,
 			}, { easing = "Quad" })
 		else
+			ctx.Paint(frame, "BackgroundColor3", targetFrame)
+			ctx.Paint(stroke, "Color", targetStroke)
+			paintIcon(iconRole, false)
 			frame.BackgroundColor3 = ctx.Color(targetFrame)
 			stroke.Color = ctx.Color(targetStroke)
+			stroke.Transparency = targetStrokeTransparency
 			ringStroke.Color = ctx.Color(iconRole)
 			handle.BackgroundColor3 = ctx.Color(iconRole)
 			iconScale.Scale = if focused then 1.08 else 1

@@ -7,7 +7,7 @@ local Types = require(script.Parent.Types)
 local Util = require(script.Parent.Util)
 local Animation = require(script.Parent.Animation)
 local Signal = require(script.Parent.Signal)
-local Base = require(script.Parent.Components.Base)
+local Button = require(script.Parent.Components.Button)
 local Search = require(script.Parent.Components.Search)
 local Tab = require(script.Parent.Tab)
 
@@ -29,6 +29,7 @@ export type Options = {
 export type Window = {
 	Instance: ScreenGui,
 	Closed: Signal.Signal,
+	Introduced: Signal.Signal,
 	CreateTab: (self: Window, options: any) -> any,
 	SelectTab: (self: Window, target: any) -> (),
 	GetTabs: (self: Window) -> { any },
@@ -75,10 +76,15 @@ function Window.new(library: any, options: Options): Window
 	local bag = Util.bag()
 	local popupBag = Util.bag()
 	local tabs: { any } = {}
-	local tabButtons: { [any]: { button: TextButton, pill: Frame, label: TextLabel, order: number, pillGradient: UIGradient } } = {}
+	local tabButtons: { [any]: { button: TextButton, hover: Frame, label: TextLabel, order: number, finalPosition: UDim2 } } = {}
 	local activeTab: any = nil
 	local activePopup: any = nil
+	local Introduced = Signal.new()
 	local minimized = false
+	local openRequested = true
+	local introGeneration = 0
+	local initializing = true
+	local basePosition: UDim2? = nil
 	local expandedSize: UDim2? = nil
 	local closed = Signal.new()
 	local toggleKey: Enum.KeyCode? = nil
@@ -99,6 +105,7 @@ function Window.new(library: any, options: Options): Window
 	local gui = Util.create("ScreenGui", {
 		Name = "Kaizax",
 		DisplayOrder = options.DisplayOrder or 100,
+		Enabled = false,
 		IgnoreGuiInset = true,
 		ResetOnSpawn = false,
 		ZIndexBehavior = Enum.ZIndexBehavior.Sibling,
@@ -115,6 +122,7 @@ function Window.new(library: any, options: Options): Window
 	}, gui)
 	Util.corner(windowShadow, cornerRadius)
 	Util.paint(windowShadow, "BackgroundColor3", "Background", theme)
+	local shadowTransparency = windowShadow.BackgroundTransparency
 
 	local window = Util.frame({
 		Name = "Window",
@@ -139,6 +147,7 @@ function Window.new(library: any, options: Options): Window
 	bag:Add(window:GetPropertyChangedSignal("Size"):Connect(syncWindowShadow))
 
 	local scale = Util.create("UIScale", { Scale = 1 }, window) :: UIScale
+	local introScale = Util.create("UIScale", { Scale = 1 }, window) :: UIScale
 
 	local topSurface = Util.frame({
 		Name = "TopSurface",
@@ -252,7 +261,6 @@ function Window.new(library: any, options: Options): Window
 		ZIndex = 4,
 	}, sidebar)
 	Util.paint(tabScroller, "ScrollBarImageColor3", "StrokeStrong", theme)
-	Util.list(tabScroller, 4)
 
 	local tabRail = Util.frame({
 		Name = "TabRail",
@@ -266,16 +274,40 @@ function Window.new(library: any, options: Options): Window
 
 	local activeIndicator = Util.frame({
 		Name = "ActiveIndicator",
+		BackgroundTransparency = 1,
+		BorderSizePixel = 0,
+		Position = UDim2.fromOffset(0, 0),
+		Size = UDim2.new(1, 0, 0, 36),
+		Visible = false,
+		ZIndex = 5,
+	}, tabRail)
+
+	local indicatorSurface = Util.frame({
+		Name = "Surface",
+		AnchorPoint = Vector2.new(0, 0.5),
+		BackgroundColor3 = theme.Palette.SurfaceRaised,
+		BorderSizePixel = 0,
+		ClipsDescendants = true,
+		Position = UDim2.fromScale(0, 0.5),
+		Size = UDim2.new(1, 0, 0, 36),
+		ZIndex = 5,
+	}, activeIndicator)
+	Util.corner(indicatorSurface, theme.Radius.Element)
+	Util.gradient(indicatorSurface, "PillShade", 0, theme)
+	Util.paint(indicatorSurface, "BackgroundColor3", "SurfaceRaised", theme)
+
+	local indicatorBar = Util.frame({
+		Name = "AccentBar",
+		AnchorPoint = Vector2.new(0, 0.5),
 		BackgroundColor3 = theme.Palette.Accent,
 		BorderSizePixel = 0,
-		Position = UDim2.fromOffset(5, 9),
-		Size = UDim2.fromOffset(3, 18),
-		Visible = false,
+		Position = UDim2.fromOffset(6, 18),
+		Size = UDim2.fromOffset(3, 24),
 		ZIndex = 6,
-	}, tabRail)
-	Util.corner(activeIndicator, theme.Radius.Pill)
-	Util.paint(activeIndicator, "BackgroundColor3", "Accent", theme)
-	Util.gradient(activeIndicator, "AccentBar", 90, theme)
+	}, indicatorSurface)
+	Util.corner(indicatorBar, theme.Radius.Pill)
+	Util.paint(indicatorBar, "BackgroundColor3", "Accent", theme)
+	Util.gradient(indicatorBar, "AccentBar", 90, theme)
 
 	local sidebarFooter = Util.frame({
 		Name = "Footer",
@@ -357,6 +389,7 @@ function Window.new(library: any, options: Options): Window
 	}, topBar)
 	Util.corner(brandDot, theme.Radius.Pill)
 	Util.paint(brandDot, "BackgroundColor3", "Accent", theme)
+	local brandDotScale = Util.create("UIScale", { Scale = 1 }, brandDot) :: UIScale
 
 	local titleLabel = Util.label({
 		Name = "Title",
@@ -474,11 +507,9 @@ function Window.new(library: any, options: Options): Window
 	end
 
 	local function indicatorY(order: number): number
-		return (order - 1) * 40 + 9 - tabScroller.CanvasPosition.Y
+		return (order - 1) * 40 - tabScroller.CanvasPosition.Y
 	end
 
-	local indicatorMove: Tween? = nil
-	local indicatorPulse: Tween? = nil
 	local indicatorGeneration = 0
 
 	local function moveIndicator(target: any, animate: boolean)
@@ -489,33 +520,33 @@ function Window.new(library: any, options: Options): Window
 
 		indicatorGeneration += 1
 		local generation = indicatorGeneration
-		Animation.cancel(indicatorMove)
-		Animation.cancel(indicatorPulse)
+		Animation.stopTagged(activeIndicator, "KaizaxIndicator")
 
-		local y = indicatorY(entry.order)
+		local y = math.floor(indicatorY(entry.order) + 0.5)
 		if not animate or not activeIndicator.Visible then
-			activeIndicator.Position = UDim2.fromOffset(5, y)
-			activeIndicator.Size = UDim2.fromOffset(3, 18)
+			activeIndicator.Position = UDim2.fromOffset(0, y)
+			activeIndicator.Size = UDim2.new(1, 0, 0, 36)
+			indicatorSurface.Size = UDim2.new(1, 0, 0, 36)
+			indicatorBar.Size = UDim2.fromOffset(3, 24)
 			activeIndicator.Visible = true
 			return
 		end
 
-		local smooth = library:_GetTheme().Motion.Slow
-		local pulse = Animation.duration(smooth / 2)
-		indicatorMove = Animation.play(activeIndicator, smooth, {
-			Position = UDim2.fromOffset(5, y),
-		}, { easing = "Sine", direction = "InOut" })
-		indicatorPulse = Animation.play(activeIndicator, pulse, {
-			Size = UDim2.fromOffset(3, 22),
-		}, { easing = "Sine", direction = "InOut" })
+		local motion = Animation.MOTION.Indicator
+		local half = Animation.duration(motion.Duration / 2)
+		Animation.play(activeIndicator, motion.Duration, {
+			Position = UDim2.fromOffset(0, y),
+		}, { easing = motion.Easing, direction = motion.Direction, tag = "KaizaxIndicator" })
+		Animation.play(indicatorSurface, half, {
+			Size = UDim2.new(1, 0, 0, 40),
+		}, { easing = "Quad", direction = "Out", tag = "KaizaxIndicator" })
 
-		task.delay(pulse, function()
-			if generation ~= indicatorGeneration then
-				return
+		task.delay(half, function()
+			if generation == indicatorGeneration and activeIndicator.Parent then
+				Animation.play(indicatorSurface, half, {
+					Size = UDim2.new(1, 0, 0, 36),
+				}, { easing = "Quad", direction = "InOut", tag = "KaizaxIndicator" })
 			end
-			indicatorPulse = Animation.play(activeIndicator, pulse, {
-				Size = UDim2.fromOffset(3, 18),
-			}, { easing = "Sine", direction = "InOut" })
 		end)
 	end
 
@@ -530,19 +561,27 @@ function Window.new(library: any, options: Options): Window
 		end
 
 		local current = library:_GetTheme()
-		local backgroundRole = if active then "SurfaceRaised" elseif hovered then "Hover" else "Surface"
 		local labelRole = if active then "Text" elseif hovered then "Text" else "TextMuted"
+		local hoverTransparency = if active then 1 elseif hovered then 0.45 else 1
 
-		Util.paint(entry.pill, "BackgroundColor3", backgroundRole, current)
-		Util.paint(entry.label, "TextColor3", labelRole, current)
-		entry.pillGradient.Enabled = active
+		Util.paint(entry.hover, "BackgroundColor3", "Hover")
+		Util.paint(entry.label, "TextColor3", labelRole)
 
-		Animation.play(entry.pill, current.Motion.Normal, {
-			BackgroundColor3 = (current.Palette :: any)[backgroundRole],
-		}, { easing = "Sine", direction = "InOut" })
-		Animation.play(entry.label, current.Motion.Normal, {
+		Animation.play(entry.hover, Animation.MOTION.Hover.Duration, {
+			BackgroundColor3 = current.Palette.Hover,
+			BackgroundTransparency = hoverTransparency,
+		}, {
+			easing = Animation.MOTION.Hover.Easing,
+			direction = Animation.MOTION.Hover.Direction,
+			tag = "KaizaxTabPaint",
+		})
+		Animation.play(entry.label, Animation.MOTION.Label.Duration, {
 			TextColor3 = (current.Palette :: any)[labelRole],
-		}, { easing = "Sine", direction = "InOut" })
+		}, {
+			easing = Animation.MOTION.Label.Easing,
+			direction = Animation.MOTION.Label.Direction,
+			tag = "KaizaxTabPaint",
+		})
 	end
 
 	local function selectTab(target: any)
@@ -550,12 +589,21 @@ function Window.new(library: any, options: Options): Window
 			return
 		end
 
+		if activeTab then
+			activeTab:SetVisible(false)
+		end
 		activeTab = target
-		for _, tab in tabs do
-			tab:SetVisible(tab == target)
+		if initializing then
+			target:PlayIntro(false)
+		else
+			target:SetVisible(true)
 		end
 		for item in tabButtons do
 			paintTab(item, item == target, false)
+		end
+		tabScroller.CanvasPosition = Vector2.new(0, 0)
+		for _, subtab in target:GetSubTabs() do
+			subtab.Instance.CanvasPosition = Vector2.new(0, 0)
 		end
 		moveIndicator(target, true)
 
@@ -563,6 +611,255 @@ function Window.new(library: any, options: Options): Window
 		if query ~= "" then
 			target:_ApplySearch(query)
 		end
+	end
+
+	local function restoreIntroVisuals()
+		Animation.stopTagged(window, "KaizaxIntro")
+		Animation.stop(windowShadow, "BackgroundTransparency")
+		Animation.stop(introScale)
+		Animation.stop(brandDotScale)
+		introScale.Scale = 1
+		brandDotScale.Scale = 1
+		windowShadow.BackgroundTransparency = shadowTransparency
+		if basePosition then
+			window.Position = basePosition
+		end
+		Animation.fade(window, 1, { Duration = 0, Tag = "KaizaxIntro" })
+		for _, entry in tabButtons do
+			entry.button.Position = entry.finalPosition
+		end
+		if activeTab then
+			moveIndicator(activeTab, false)
+		end
+	end
+
+	local function playIntro()
+		introGeneration += 1
+		local generation = introGeneration
+		local finalPosition = basePosition or window.Position
+		finalPosition = UDim2.fromOffset(
+			math.floor(finalPosition.X.Offset),
+			math.floor(finalPosition.Y.Offset)
+		)
+		basePosition = finalPosition
+		gui.Enabled = true
+		restoreIntroVisuals()
+
+		if not Animation.introEnabled() then
+			window.Position = UDim2.fromOffset(
+				math.floor(finalPosition.X.Offset),
+				math.floor(finalPosition.Y.Offset)
+			)
+			introScale.Scale = 1
+			if activeTab then
+				activeTab:PlayIntro(false)
+			end
+			Introduced:Fire()
+			return
+		end
+
+		windowShadow.BackgroundTransparency = 1
+		window.Position = UDim2.fromOffset(
+			math.floor(finalPosition.X.Offset),
+			math.floor(finalPosition.Y.Offset + 16)
+		)
+		introScale.Scale = 0.96
+
+		Animation.fade(window, 0, { Duration = 0, IncludeDescendants = false, Tag = "KaizaxIntro" })
+		Animation.fade(windowStroke, 0, { Duration = 0, Tag = "KaizaxIntro" })
+		for _, surface in { topSurface, sideSurface, windowCornerFill } do
+			Animation.fade(surface, 0, { Duration = 0, IncludeDescendants = false, Tag = "KaizaxIntro" })
+		end
+		Animation.fade(topBar, 0, { Duration = 0, Tag = "KaizaxIntro" })
+		Animation.fade(sidebar, 0, { Duration = 0, IncludeDescendants = false, Tag = "KaizaxIntro" })
+		Animation.fade(content, 0, { Duration = 0, IncludeDescendants = false, Tag = "KaizaxIntro" })
+		activeIndicator.Visible = false
+
+		for _, entry in tabButtons do
+			entry.button.Position = UDim2.fromOffset(entry.finalPosition.X.Offset - 12, entry.finalPosition.Y.Offset)
+			Animation.fade(entry.button, 0, { Duration = 0, Tag = "KaizaxIntro" })
+		end
+
+		local enter = Animation.MOTION.Enter
+		Animation.play(windowShadow, 0.4, {
+			BackgroundTransparency = shadowTransparency,
+		}, { easing = "Quad", direction = "Out", tag = "KaizaxIntro" })
+
+		task.delay(0.05, function()
+			if generation ~= introGeneration or not gui.Enabled then
+				return
+			end
+			Animation.fade(window, 1, {
+				Duration = enter.Duration,
+				Easing = enter.Easing,
+				Direction = enter.Direction,
+				IncludeDescendants = false,
+				Tag = "KaizaxIntro",
+			})
+			Animation.fade(windowStroke, 1, {
+				Duration = enter.Duration,
+				Easing = enter.Easing,
+				Direction = enter.Direction,
+				Tag = "KaizaxIntro",
+			})
+			for _, surface in { topSurface, sideSurface, windowCornerFill } do
+				Animation.fade(surface, 1, {
+					Duration = enter.Duration,
+					Easing = enter.Easing,
+					Direction = enter.Direction,
+					IncludeDescendants = false,
+					Tag = "KaizaxIntro",
+				})
+			end
+			Animation.play(window, enter.Duration, {
+				Position = finalPosition,
+			}, { easing = enter.Easing, direction = enter.Direction, tag = "KaizaxIntro" })
+			Animation.play(introScale, enter.Duration, {
+				Scale = 1,
+			}, { easing = enter.Easing, direction = enter.Direction, tag = "KaizaxIntro" })
+		end)
+
+		task.delay(0.1, function()
+			if generation ~= introGeneration or not gui.Enabled then
+				return
+			end
+			Animation.fade(topBar, 1, {
+				Duration = 0.34,
+				Easing = enter.Easing,
+				Direction = enter.Direction,
+				Tag = "KaizaxIntro",
+			})
+			brandDotScale.Scale = 1.18
+			Animation.play(brandDotScale, 0.22, {
+				Scale = 1,
+			}, { easing = "Quad", direction = "Out", tag = "KaizaxIntro" })
+		end)
+
+		task.delay(0.16, function()
+			if generation ~= introGeneration or not gui.Enabled then
+				return
+			end
+			for _, descendant in content:GetDescendants() do
+				if descendant:IsA("TextButton")
+					and descendant:GetAttribute("KaizaxButtonVariant") == "Primary"
+				then
+					local button = Button.Get(descendant)
+					if button then
+						button:Flash()
+					end
+				end
+			end
+		end)
+
+		for _, entry in tabButtons do
+			local delay = 0.14 + (entry.order - 1) * Animation.MOTION.Stagger
+			Animation.play(entry.button, enter.Duration, {
+				Position = entry.finalPosition,
+			}, { easing = enter.Easing, direction = enter.Direction, delay = delay, tag = "KaizaxIntro" })
+			Animation.fade(entry.button, 1, {
+				Duration = 0.3,
+				Easing = enter.Easing,
+				Direction = enter.Direction,
+				Delay = delay,
+				Tag = "KaizaxIntro",
+			})
+		end
+
+		local indicatorDelay = 0.14 + (#tabs * Animation.MOTION.Stagger) + 0.04
+		task.delay(indicatorDelay, function()
+			if generation ~= introGeneration or not gui.Enabled or not activeTab then
+				return
+			end
+			local entry = tabButtons[activeTab]
+			if not entry then
+				return
+			end
+			local pulse = Animation.MOTION.Indicator
+			activeIndicator.Visible = true
+			activeIndicator.Position = UDim2.fromOffset(0, math.floor(indicatorY(entry.order) + 0.5))
+			indicatorSurface.Size = UDim2.new(1, 0, 0, 0)
+			indicatorBar.Size = UDim2.fromOffset(3, 0)
+			Animation.play(indicatorSurface, pulse.Duration, {
+				Size = UDim2.new(1, 0, 0, 36),
+			}, { easing = pulse.Easing, direction = pulse.Direction, tag = "KaizaxIntro" })
+			Animation.play(indicatorBar, pulse.Duration, {
+				Size = UDim2.fromOffset(3, 24),
+			}, { easing = pulse.Easing, direction = pulse.Direction, tag = "KaizaxIntro" })
+		end)
+
+		task.delay(0.2, function()
+			if generation == introGeneration and gui.Enabled and activeTab then
+				activeTab:PlayIntro(true)
+			end
+		end)
+
+		local dots: { GuiObject } = {}
+		for _, descendant in content:GetDescendants() do
+			if descendant:IsA("GuiObject") and descendant:GetAttribute("KaizaxStatusDot") then
+				dots[#dots + 1] = descendant
+			end
+		end
+		for index, dot in dots do
+			if index > 3 then
+				break
+			end
+			local dotScale = dot:FindFirstChildOfClass("UIScale")
+			if not dotScale then
+				dotScale = Util.create("UIScale", { Scale = 1 }, dot) :: UIScale
+			end
+			dotScale.Scale = 0.4
+			Animation.play(dotScale, 0.22, {
+				Scale = 1,
+			}, {
+				easing = "Back",
+				direction = "Out",
+				delay = 0.48 + (index - 1) * Animation.MOTION.Stagger,
+				tag = "KaizaxIntro",
+			})
+		end
+
+		task.delay(0.54, function()
+			if generation == introGeneration and gui.Enabled then
+				Introduced:Fire()
+			end
+		end)
+
+		task.delay(0.92, function()
+			if generation == introGeneration and gui.Enabled then
+				window.Position = finalPosition
+				restoreIntroVisuals()
+			end
+		end)
+	end
+
+	local function playClose()
+		introGeneration += 1
+		local generation = introGeneration
+		Animation.stopTagged(window, "KaizaxIntro")
+
+		if not Animation.enabled() or Animation.reducedMotion() then
+			gui.Enabled = false
+			restoreIntroVisuals()
+			return
+		end
+
+		local exit = Animation.MOTION.Exit
+		Animation.fade(window, 0, {
+			Duration = exit.Duration,
+			Easing = exit.Easing,
+			Direction = exit.Direction,
+			Tag = "KaizaxIntro",
+		})
+		Animation.play(introScale, exit.Duration, {
+			Scale = 0.98,
+		}, { easing = exit.Easing, direction = exit.Direction, tag = "KaizaxIntro" })
+
+		task.delay(exit.Duration + 0.02, function()
+			if generation == introGeneration and not openRequested then
+				gui.Enabled = false
+				restoreIntroVisuals()
+			end
+		end)
 	end
 
 	function self:CreateTab(optionsOrName: any): any
@@ -601,10 +898,12 @@ function Window.new(library: any, options: Options): Window
 		table.insert(tabs, tab)
 		local order = #tabs
 
+		local finalPosition = UDim2.fromOffset(0, (order - 1) * 40)
 		local button = Util.textButton({
 			Name = `TabButton_{tab.Name}`,
 			BackgroundTransparency = 1,
 			BorderSizePixel = 0,
+			Position = finalPosition,
 			Size = UDim2.new(1, 0, 0, 36),
 			Text = "",
 			AutoButtonColor = false,
@@ -612,47 +911,38 @@ function Window.new(library: any, options: Options): Window
 			ZIndex = 5,
 		}, tabScroller)
 
-		local pill = Util.frame({
-			Name = "Pill",
-			BackgroundColor3 = theme.Palette.Surface,
+		local hover = Util.frame({
+			Name = "HoverFill",
+			BackgroundColor3 = theme.Palette.Hover,
+			BackgroundTransparency = 1,
 			BorderSizePixel = 0,
 			Size = UDim2.fromScale(1, 1),
 			ZIndex = 4,
 		}, button)
-		Util.corner(pill, theme.Radius.Element)
-		local pillGradient = Util.gradient(pill, "PillShade", 0, theme)
-		pillGradient.Enabled = false
-		Util.padding(button, 20, 0)
-		local buttonList = Util.list(button, 0, Enum.FillDirection.Horizontal)
-		buttonList.VerticalAlignment = Enum.VerticalAlignment.Center
-		local tabScale = Base.pressable(button, bag)
-		tabScale.Scale = 0.96
-		Animation.play(tabScale, theme.Motion.Normal, {
-			Scale = 1,
-		}, { delay = 0.03 * #tabs, easing = "Quart" })
+		Util.corner(hover, theme.Radius.Element)
+		Util.paint(hover, "BackgroundColor3", "Hover", theme)
 
 		local label = Util.label({
 			BackgroundTransparency = 1,
 			Font = theme.Fonts.Medium,
-			Size = UDim2.new(1, -40, 1, 0),
+			Position = UDim2.fromOffset(21, 0),
+			Size = UDim2.new(1, -33, 1, 0),
 			Text = tab.Name,
 			TextColor3 = theme.Palette.TextMuted,
 			TextSize = 13,
 			TextXAlignment = Enum.TextXAlignment.Left,
 			TextYAlignment = Enum.TextYAlignment.Center,
 			TextTruncate = Enum.TextTruncate.AtEnd,
-			ZIndex = 6,
+			ZIndex = 7,
 		}, button)
-
-		Util.paint(pill, "BackgroundColor3", "Surface", theme)
 		Util.paint(label, "TextColor3", "TextMuted", theme)
 
 		tabButtons[tab] = {
 			button = button,
-			pill = pill,
+			hover = hover,
 			label = label,
 			order = order,
-			pillGradient = pillGradient,
+			finalPosition = finalPosition,
 		}
 
 		bag:Add(button.MouseEnter:Connect(function()
@@ -704,22 +994,33 @@ function Window.new(library: any, options: Options): Window
 	end
 
 	function self:SetOpen(open: boolean)
-		local wasOpen = gui.Enabled
-		gui.Enabled = open
-
-		if not open and wasOpen then
-			self:_ClosePopup(nil)
-			closed:Fire()
-			Util.safeCall(options.OnClose)
+		if open == openRequested then
+			return
 		end
+		openRequested = open
+
+		if open then
+			if initializing then
+				gui.Enabled = true
+				return
+			end
+			playIntro()
+			return
+		end
+
+		gui.Enabled = true
+		self:_ClosePopup(nil)
+		closed:Fire()
+		Util.safeCall(options.OnClose)
+		playClose()
 	end
 
 	function self:Toggle()
-		self:SetOpen(not gui.Enabled)
+		self:SetOpen(not openRequested)
 	end
 
 	function self:IsOpen(): boolean
-		return gui.Enabled
+		return openRequested
 	end
 
 	function self:SetMinimized(value: boolean)
@@ -798,6 +1099,7 @@ function Window.new(library: any, options: Options): Window
 			(math.floor(targetX + 0.5) - parentPosition.X) / currentScale,
 			(math.floor(targetY + 0.5) - parentPosition.Y) / currentScale
 		)
+		basePosition = window.Position
 	end
 
 	local function clampWindow()
@@ -874,34 +1176,52 @@ function Window.new(library: any, options: Options): Window
 		AnchorPoint = Vector2.new(1, 1),
 		BackgroundTransparency = 1,
 		BorderSizePixel = 0,
-		Position = UDim2.new(1, -10, 1, -10),
-		Size = UDim2.fromOffset(16, 16),
+		Position = UDim2.new(1, -8, 1, -8),
+		Size = UDim2.fromOffset(12, 12),
 		Text = "",
 		AutoButtonColor = false,
 		ZIndex = 20,
 	}, window)
 
-	local gripSurface = Util.frame({
-		Name = "Surface",
-		BackgroundColor3 = theme.Palette.SurfaceRaised,
-		BorderSizePixel = 0,
-		Size = UDim2.fromOffset(16, 16),
-		ZIndex = 20,
-	}, resizeGrip)
-	Util.corner(gripSurface, 4)
-	Util.paint(gripSurface, "BackgroundColor3", "SurfaceRaised", theme)
-
-	for index, offset in { 5, 8, 11 } do
+	local gripPixels: { Frame } = {}
+	for index, offset in { 4, 7, 10 } do
 		local pixel = Util.frame({
 			Name = `Pixel{index}`,
 			BackgroundColor3 = theme.Palette.TextFaint,
 			BorderSizePixel = 0,
-			Position = UDim2.fromOffset(offset, 14 - offset),
+			Position = UDim2.fromOffset(offset, offset - 2),
 			Size = UDim2.fromOffset(2, 2),
 			ZIndex = 21,
 		}, resizeGrip)
-		Util.paint(pixel, "BackgroundColor3", "TextFaint", theme)
+		gripPixels[#gripPixels + 1] = pixel
 	end
+
+	local function paintGrip(role: string, animate: boolean)
+		local current = library:_GetTheme()
+		local color = (current.Palette :: any)[role]
+		for _, pixel in gripPixels do
+			if animate then
+				Util.paint(pixel, "BackgroundColor3", role)
+				Animation.play(pixel, Animation.MOTION.Hover.Duration, {
+					BackgroundColor3 = color,
+				}, {
+					easing = Animation.MOTION.Hover.Easing,
+					direction = Animation.MOTION.Hover.Direction,
+				})
+			else
+				Util.paint(pixel, "BackgroundColor3", role, current)
+				pixel.BackgroundColor3 = color
+			end
+		end
+	end
+
+	paintGrip("TextFaint", false)
+	bag:Add(resizeGrip.MouseEnter:Connect(function()
+		paintGrip("TextMuted", true)
+	end))
+	bag:Add(resizeGrip.MouseLeave:Connect(function()
+		paintGrip("TextFaint", true)
+	end))
 
 	bag:Add(resizeGrip.InputBegan:Connect(function(input)
 		if input.UserInputType ~= Enum.UserInputType.MouseButton1
@@ -1134,7 +1454,7 @@ function Window.new(library: any, options: Options): Window
 	content.Position = UDim2.fromOffset(theme.Window.Sidebar, theme.Window.TopBar)
 	content.Size = UDim2.new(1, -theme.Window.Sidebar, 1, -theme.Window.TopBar)
 
-	local initialScale = applyScale()
+	applyScale()
 
 	local viewport = Util.viewportSize()
 	moveToAbsolute(Vector2.new(
@@ -1168,48 +1488,16 @@ function Window.new(library: any, options: Options): Window
 		titleLabel.Size = UDim2.new(0.5, -44, 0, 18)
 	end
 
-	local entranceVeil = Util.frame({
-		Name = "EntranceVeil",
-		BackgroundColor3 = theme.Palette.Background,
-		BackgroundTransparency = 0,
-		BorderSizePixel = 0,
-		Size = UDim2.fromScale(1, 1),
-		ZIndex = 100,
-	}, window)
-	Util.paint(entranceVeil, "BackgroundColor3", "Background", theme)
-
-	scale.Scale = initialScale * 0.985
-	Animation.play(scale, theme.Motion.Slow, {
-		Scale = initialScale,
-	}, { easing = "Quart" })
-	Animation.play(entranceVeil, theme.Motion.Normal, {
-		BackgroundTransparency = 1,
-	}, { easing = "Quad" })
-	task.delay(Animation.duration(theme.Motion.Normal) + 0.05, function()
-		if entranceVeil.Parent then
-			entranceVeil:Destroy()
+	task.defer(function()
+		if initializing then
+			initializing = false
+			playIntro()
 		end
 	end)
 
-	brandDot.BackgroundTransparency = 1
-	titleLabel.TextTransparency = 1
-	if subtitle then
-		subtitle.TextTransparency = 1
-	end
-	Animation.play(brandDot, theme.Motion.Fast, {
-		BackgroundTransparency = 0,
-	}, { delay = 0.02, easing = "Quad" })
-	Animation.play(titleLabel, theme.Motion.Normal, {
-		TextTransparency = 0,
-	}, { delay = 0.05, easing = "Quad" })
-	if subtitle then
-		Animation.play(subtitle, theme.Motion.Normal, {
-			TextTransparency = 0,
-		}, { delay = 0.09, easing = "Quad" })
-	end
-
 	self.Instance = gui
 	self.Closed = closed
+	self.Introduced = Introduced
 	library:_AddWindow(self)
 
 	return self

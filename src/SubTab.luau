@@ -39,7 +39,7 @@ function SubTab.new(
 		Name = if name then `SubTab_{name}` else "SubTab_General",
 		BackgroundTransparency = 1,
 		BorderSizePixel = 0,
-		Size = UDim2.new(1, -4, 1, 0),
+		Size = UDim2.new(1, -4, 1, -20),
 		CanvasSize = UDim2.new(),
 		AutomaticCanvasSize = Enum.AutomaticSize.Y,
 		ScrollBarThickness = 4,
@@ -101,7 +101,7 @@ function SubTab.new(
 		Name = "BottomSpace",
 		BackgroundTransparency = 1,
 		LayoutOrder = 2,
-		Size = UDim2.new(1, 0, 0, 24),
+		Size = UDim2.new(1, 0, 0, 52),
 	}, holder)
 
 	local subtab = setmetatable({} :: any, SubTab) :: SubTab

@@ -25,9 +25,13 @@ export type Button = {
 	SetDisabled: (self: Button, disabled: boolean) -> (),
 	GetDisabled: (self: Button) -> boolean,
 	SetVisible: (self: Button, visible: boolean) -> (),
+	Sweep: (self: Button, enabled: boolean) -> (),
+	Flash: (self: Button) -> (),
 	OnClicked: (self: Button, handler: () -> ()) -> Signal.Connection,
 	Destroy: (self: Button) -> (),
 }
+
+local registry: { [Instance]: Button } = {}
 
 function Button.new(
 	ctx: Types.UIContext,
@@ -50,6 +54,7 @@ function Button.new(
 		Text = "",
 		Active = not disabled,
 	}, parent)
+	instance:SetAttribute("KaizaxButtonVariant", variant)
 
 	local surface = Util.frame({
 		Name = "Surface",
@@ -71,11 +76,71 @@ function Button.new(
 	})
 	label.Size = UDim2.new(1, -20, 1, 0)
 	label.Position = UDim2.fromOffset(10, 0)
-	label.ZIndex = 2
+	label.ZIndex = 3
+
+	local sweep = Util.frame({
+		Name = "Sweep",
+		BackgroundTransparency = 0,
+		BorderSizePixel = 0,
+		Size = UDim2.fromScale(1, 1),
+		Visible = false,
+		ZIndex = 2,
+	}, surface)
+	ctx.Paint(sweep, "BackgroundColor3", "Text")
+	local sweepGradient = Util.create("UIGradient", {
+		Offset = Vector2.new(-1, 0),
+		Transparency = NumberSequence.new({
+			NumberSequenceKeypoint.new(0, 1),
+			NumberSequenceKeypoint.new(0.5, 0),
+			NumberSequenceKeypoint.new(1, 1),
+		}),
+	}, sweep) :: UIGradient
+	local sweepTween: Tween? = nil
+	local sweepToken = 0
 
 	local stroke = Util.stroke(surface, 1)
 	stroke.Transparency = 1
 	local clicked = Signal.new()
+
+	local function stopSweep()
+		sweepToken += 1
+		Animation.cancel(sweepTween)
+		sweepTween = nil
+		sweep.Visible = false
+		sweepGradient.Offset = Vector2.new(-1, 0)
+	end
+
+	bag:Add(instance:GetPropertyChangedSignal("Visible"):Connect(function()
+		if not instance.Visible then
+			stopSweep()
+		end
+	end))
+
+	local function startSweep(loop: boolean)
+		stopSweep()
+		if not Animation.enabled() or Animation.reducedMotion() then
+			return
+		end
+
+		local token = sweepToken
+		sweep.Visible = true
+		sweepGradient.Offset = Vector2.new(-1, 0)
+		sweepTween = Animation.play(sweepGradient, if loop then 0.7 else 0.45, {
+			Offset = Vector2.new(1, 0),
+		}, {
+			easing = "Quad",
+			repeatCount = if loop then -1 else 0,
+			tag = "KaizaxSweep",
+		})
+
+		if not loop then
+			task.delay(0.47, function()
+				if token == sweepToken then
+					sweep.Visible = false
+				end
+			end)
+		end
+	end
 
 	local function style(): (Color3, number, string, string, Color3?, number?, string?)
 		local current = ctx.GetTheme()
@@ -98,31 +163,40 @@ function Button.new(
 	local function applyStyle(animate: boolean)
 		local background, transparency, backgroundRole, textRole, strokeColor, strokeTransparency, strokeRole =
 			style()
-		local current = ctx.GetTheme()
 
-		ctx.Paint(surface, "BackgroundColor3", backgroundRole)
-		ctx.Paint(label, "TextColor3", textRole)
-
-		if strokeColor then
-			ctx.Paint(stroke, "Color", strokeRole or "Stroke")
-			stroke.Transparency = strokeTransparency or 0
+		local strokeRoleName = strokeRole or "Stroke"
+		if animate then
+			Util.paint(surface, "BackgroundColor3", backgroundRole)
+			Util.paint(label, "TextColor3", textRole)
+			if strokeColor then
+				Util.paint(stroke, "Color", strokeRoleName)
+			end
 		else
-			stroke.Transparency = 1
+			ctx.Paint(surface, "BackgroundColor3", backgroundRole)
+			ctx.Paint(label, "TextColor3", textRole)
+			if strokeColor then
+				ctx.Paint(stroke, "Color", strokeRoleName)
+			end
 		end
 
+		stroke.Transparency = if strokeColor then (strokeTransparency or 0) else 1
+
 		if animate then
-			Animation.play(surface, current.Motion.Fast, {
+			local motion = Animation.MOTION.Hover
+			Animation.play(surface, motion.Duration, {
 				BackgroundColor3 = background,
 				BackgroundTransparency = transparency,
 			}, {
-				easing = "Quad",
+				easing = motion.Easing,
+				direction = motion.Direction,
 			})
 
 			if not disabled then
-				Animation.play(label, current.Motion.Fast, {
+				Animation.play(label, Animation.MOTION.Label.Duration, {
 					TextColor3 = ctx.Color(textRole),
 				}, {
-					easing = "Quad",
+					easing = Animation.MOTION.Label.Easing,
+					direction = Animation.MOTION.Label.Direction,
 				})
 			end
 		else
@@ -133,7 +207,42 @@ function Button.new(
 	end
 
 	applyStyle(false)
-	Base.pressable(instance, bag)
+
+	local pressed = false
+	local function setPressed(value: boolean)
+		if disabled or pressed == value then
+			return
+		end
+		pressed = value
+
+		local current = ctx.GetTheme()
+		local background, _, backgroundRole = style()
+		Util.paint(surface, "BackgroundColor3", backgroundRole)
+		local target = if value then background:Lerp(current.Palette.Background, 0.18) else background
+		local motion = Animation.MOTION.Press
+
+		Animation.play(surface, motion.Duration, {
+			BackgroundColor3 = target,
+		}, { easing = motion.Easing, direction = motion.Direction })
+		Animation.play(label, motion.Duration, {
+			Position = UDim2.fromOffset(10, if value then 1 else 0),
+		}, { easing = motion.Easing, direction = motion.Direction })
+	end
+
+	bag:Add(instance.InputBegan:Connect(function(input)
+		if input.UserInputType == Enum.UserInputType.MouseButton1
+			or input.UserInputType == Enum.UserInputType.Touch
+		then
+			setPressed(true)
+		end
+	end))
+
+	local function releasePress()
+		setPressed(false)
+	end
+
+	bag:Add(instance.InputEnded:Connect(releasePress))
+	bag:Add(instance.MouseLeave:Connect(releasePress))
 
 	bag:Add(instance.MouseEnter:Connect(function()
 		if disabled then
@@ -141,6 +250,7 @@ function Button.new(
 		end
 
 		local current = ctx.GetTheme()
+		local motion = Animation.MOTION.Hover
 		local hoverColor: Color3
 		local hoverTransparency: number
 		local hoverRole: string
@@ -159,29 +269,32 @@ function Button.new(
 			hoverRole = "Hover"
 		end
 
-		ctx.Paint(surface, "BackgroundColor3", hoverRole)
-		Animation.play(surface, current.Motion.Fast, {
+		Util.paint(surface, "BackgroundColor3", hoverRole)
+		Animation.play(surface, motion.Duration, {
 			BackgroundColor3 = hoverColor,
 			BackgroundTransparency = hoverTransparency,
 		}, {
-			easing = "Quad",
+			easing = motion.Easing,
+			direction = motion.Direction,
 		})
 
 		if variant == "Ghost" then
-			ctx.Paint(label, "TextColor3", "Text")
-			Animation.play(label, current.Motion.Fast, {
+			Util.paint(label, "TextColor3", "Text")
+			Animation.play(label, Animation.MOTION.Label.Duration, {
 				TextColor3 = current.Palette.Text,
 			}, {
-				easing = "Quad",
+				easing = Animation.MOTION.Label.Easing,
+				direction = Animation.MOTION.Label.Direction,
 			})
 		end
 
 		if stroke.Transparency < 1 then
-			ctx.Paint(stroke, "Color", "StrokeStrong")
-			Animation.play(stroke, current.Motion.Fast, {
+			Util.paint(stroke, "Color", "StrokeStrong")
+			Animation.play(stroke, motion.Duration, {
 				Color = current.Palette.StrokeStrong,
 			}, {
-				easing = "Quad",
+				easing = motion.Easing,
+				direction = motion.Direction,
 			})
 		end
 	end))
@@ -204,6 +317,7 @@ function Button.new(
 	local self = setmetatable({} :: any, Button) :: Button
 	self.Instance = instance
 	self.Clicked = clicked
+	registry[instance] = self
 
 	function self:SetText(newText: string)
 		text = newText
@@ -220,6 +334,10 @@ function Button.new(
 		end
 		disabled = value
 		instance.Active = not value
+		if value then
+			stopSweep()
+			setPressed(false)
+		end
 		applyStyle(true)
 	end
 
@@ -231,11 +349,25 @@ function Button.new(
 		instance.Visible = visible
 	end
 
+	function self:Sweep(enabled: boolean)
+		if enabled then
+			startSweep(true)
+		else
+			stopSweep()
+		end
+	end
+
+	function self:Flash()
+		startSweep(false)
+	end
+
 	function self:OnClicked(handler: () -> ()): Signal.Connection
 		return clicked:Connect(handler)
 	end
 
 	function self:Destroy()
+		stopSweep()
+		registry[instance] = nil
 		bag:Clear()
 		clicked:DisconnectAll()
 		instance:Destroy()
@@ -245,6 +377,10 @@ function Button.new(
 	ctx.Register(instance, text)
 
 	return self
+end
+
+function Button.Get(instance: Instance): Button?
+	return registry[instance]
 end
 
 return Button
