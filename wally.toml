@@ -1,0 +1,11 @@
+[package]
+name = "zippyyyyyyy/kaizax-lib"
+description = "Reusable Roblox UI components with a small, themeable token layer."
+version = "0.1.0"
+license = "MIT"
+realm = "shared"
+registry = "https://github.com/UpliftGames/wally-index"
+
+[dependencies]
+
+[dev-dependencies]

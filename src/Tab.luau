@@ -1,0 +1,329 @@
+--!strict
+
+local Types = require(script.Parent.Types)
+local Util = require(script.Parent.Util)
+local Animation = require(script.Parent.Animation)
+local Base = require(script.Parent.Components.Base)
+local SubTab = require(script.Parent.SubTab)
+
+local Tab = {}
+Tab.__index = Tab
+
+export type Options = {
+	Name: string,
+	Description: string?,
+	SubTabs: { { Name: string, Columns: number? } }?,
+}
+
+export type Tab = {
+	Instance: Frame,
+	Name: string,
+	CreateSection: (self: Tab, options: any) -> any,
+	CreateSubTab: (self: Tab, name: string, columns: number?) -> any,
+	SelectSubTab: (self: Tab, target: any) -> (),
+	GetSubTabs: (self: Tab) -> { any },
+	SetVisible: (self: Tab, visible: boolean) -> (),
+	Destroy: (self: Tab) -> (),
+}
+
+type ButtonEntry = {
+	button: TextButton,
+	label: TextLabel,
+}
+
+function Tab.new(
+	ctx: Types.UIContext,
+	parent: Instance,
+	options: Options
+): Tab
+	local theme = ctx.GetTheme()
+	local titleText = options.Name
+	local description = options.Description or ""
+	local subtabs: { any } = {}
+	local buttons: { [any]: ButtonEntry } = {}
+	local current: any = nil
+
+	local root = Util.frame({
+		Name = `Tab_{titleText}`,
+		BackgroundTransparency = 1,
+		Size = UDim2.fromScale(1, 1),
+	}, parent)
+	root.Visible = false
+
+	local header = Util.frame({
+		Name = "Header",
+		BackgroundTransparency = 1,
+		Size = UDim2.new(1, 0, 0, 76),
+	}, root)
+
+	local title = Base.text(ctx, header, titleText, {
+		Font = theme.Fonts.Bold,
+		Size = 22,
+		ColorRole = "Text",
+	})
+	title.Position = UDim2.fromOffset(20, 14)
+	title.Size = UDim2.new(0.58, -20, 0, 28)
+
+	local subtitle = Base.text(ctx, header, description, {
+		Font = theme.Fonts.Regular,
+		Size = 12,
+		ColorRole = "TextMuted",
+	})
+	subtitle.Position = UDim2.fromOffset(20, 44)
+	subtitle.Size = UDim2.new(0.58, -20, 0, 18)
+	subtitle.Visible = description ~= ""
+
+	local bar = Util.frame({
+		Name = "SubTabBar",
+		AnchorPoint = Vector2.new(1, 0),
+		AutomaticSize = Enum.AutomaticSize.X,
+		BackgroundColor3 = theme.Palette.Surface,
+		BorderSizePixel = 0,
+		Position = UDim2.new(1, -20, 0, 16),
+		Size = UDim2.fromOffset(0, 30),
+		Visible = false,
+	}, header)
+	Util.corner(bar, 6)
+	local barStroke = Util.stroke(bar, 1)
+	ctx.Paint(bar, "BackgroundColor3", "Surface")
+	ctx.Paint(barStroke, "Color", "Stroke")
+	Util.padding(bar, 3, 3)
+
+	local barLayout = Util.list(bar, 2, Enum.FillDirection.Horizontal)
+	barLayout.VerticalAlignment = Enum.VerticalAlignment.Center
+
+	local divider = Util.frame({
+		Name = "Divider",
+		BackgroundColor3 = theme.Palette.Stroke,
+		BorderSizePixel = 0,
+		Position = UDim2.fromOffset(0, 76),
+		Size = UDim2.new(1, 0, 0, 1),
+	}, root)
+	ctx.Paint(divider, "BackgroundColor3", "Stroke")
+
+	local body = Util.frame({
+		Name = "Body",
+		BackgroundTransparency = 1,
+		Position = UDim2.fromOffset(0, 77),
+		Size = UDim2.new(1, 0, 1, -77),
+	}, root)
+
+	local empty = Base.text(ctx, body, "No controls match your search.", {
+		Font = theme.Fonts.Regular,
+		Size = 12,
+		ColorRole = "TextFaint",
+		Wrapped = true,
+		XAlign = Enum.TextXAlignment.Center,
+		YAlign = Enum.TextYAlignment.Center,
+	})
+	empty.Size = UDim2.fromScale(1, 1)
+	empty.Visible = false
+
+	local tab = setmetatable({} :: any, Tab) :: Tab
+	tab.Instance = root
+	tab.Name = titleText
+
+	local function paintButton(subtab: any, active: boolean, hovered: boolean)
+		local entry = buttons[subtab]
+		if not entry then
+			return
+		end
+
+		local current = ctx.GetTheme()
+		local backgroundRole = if active then "SurfaceRaised" elseif hovered then "Hover" else "Surface"
+		local labelRole = if active then "Text" elseif hovered then "Text" else "TextMuted"
+
+		ctx.Paint(entry.button, "BackgroundColor3", backgroundRole)
+		ctx.Paint(entry.label, "TextColor3", labelRole)
+		Animation.play(entry.button, current.Motion.Fast, {
+			BackgroundColor3 = ctx.Color(backgroundRole),
+			BackgroundTransparency = if active or hovered then 0 else 1,
+		}, { easing = "Quad" })
+		Animation.play(entry.label, current.Motion.Fast, {
+			TextColor3 = ctx.Color(labelRole),
+		}, { easing = "Quad" })
+	end
+
+	local function selectSubTab(target: any)
+		if current == target then
+			return
+		end
+		current = target
+		for item in buttons do
+			paintButton(item, item == target, false)
+		end
+		for _, subtab in subtabs do
+			subtab:_SetActive(subtab == target)
+		end
+	end
+
+	local function addSubTab(name: string, columns: number?): any
+		local subtab = SubTab.new(ctx, body, name, columns or 1, function(chosen)
+			selectSubTab(chosen)
+		end, true)
+
+		table.insert(subtabs, subtab)
+
+		local button = Util.textButton({
+			Name = `SubTabButton_{name}`,
+			AutomaticSize = Enum.AutomaticSize.X,
+			BackgroundColor3 = theme.Palette.Surface,
+			BackgroundTransparency = 1,
+			BorderSizePixel = 0,
+			LayoutOrder = #subtabs,
+			Size = UDim2.fromOffset(0, 24),
+			Text = "",
+			AutoButtonColor = false,
+		}, bar)
+		Util.corner(button, 4)
+
+		local label = Base.text(ctx, button, name, {
+			Font = theme.Fonts.Medium,
+			Size = 11.5,
+			ColorRole = "TextMuted",
+			XAlign = Enum.TextXAlignment.Center,
+		})
+		label.AutomaticSize = Enum.AutomaticSize.X
+		label.Size = UDim2.new(0, 0, 1, 0)
+		Util.padding(button, 10, 0)
+
+		buttons[subtab] = {
+			button = button,
+			label = label,
+		}
+
+		button.MouseEnter:Connect(function()
+			paintButton(subtab, current == subtab, true)
+		end)
+		button.MouseLeave:Connect(function()
+			paintButton(subtab, current == subtab, false)
+		end)
+		button.Activated:Connect(function()
+			selectSubTab(subtab)
+		end)
+
+		return subtab
+	end
+
+	local provided = options.SubTabs or {}
+	if #provided == 0 then
+		addSubTab("General", 1)
+	else
+		for _, entry in provided do
+			addSubTab(entry.Name, entry.Columns)
+		end
+	end
+
+	if #subtabs > 1 then
+		bar.Visible = true
+	end
+
+	if subtabs[1] then
+		selectSubTab(subtabs[1])
+	end
+
+	function tab:CreateSection(value: any): any
+		return current:CreateSection(value)
+	end
+
+	function tab:CreateSubTab(name: string, columns: number?): any
+		for _, subtab in subtabs do
+			if subtab:GetName() == name then
+				selectSubTab(subtab)
+				return subtab
+			end
+		end
+
+		local subtab = addSubTab(name, columns)
+		bar.Visible = true
+		selectSubTab(subtab)
+		return subtab
+	end
+
+	function tab:SelectSubTab(target: any)
+		if typeof(target) == "string" then
+			for _, subtab in subtabs do
+				if subtab:GetName() == target then
+					selectSubTab(subtab)
+					return
+				end
+			end
+		elseif buttons[target] then
+			selectSubTab(target)
+		end
+	end
+
+	function tab:GetSubTabs(): { any }
+		return subtabs
+	end
+
+	function tab:SetVisible(visible: boolean)
+		root.Visible = visible
+	end
+
+	function tab:_ApplySearch(query: string): boolean
+		local trimmed = string.gsub(query or "", "^%s*(.-)%s*$", "%1")
+		local lowered = string.lower(trimmed)
+		local firstMatch: any = nil
+		local anyMatch = false
+
+		for _, subtab in subtabs do
+			local count = subtab:_ApplySearch(lowered)
+			local matches = lowered == "" or count > 0
+			local entry = buttons[subtab]
+
+			if entry then
+				entry.button.Visible = matches
+			end
+
+			if matches then
+				anyMatch = true
+				if not firstMatch then
+					firstMatch = subtab
+				end
+			end
+		end
+
+		if lowered == "" then
+			empty.Visible = false
+			if current then
+				current:_SetActive(true)
+			end
+			return true
+		end
+
+		if not anyMatch then
+			empty.Text = `No controls match "{trimmed}".`
+			empty.Visible = true
+			for _, subtab in subtabs do
+				subtab:_SetActive(false)
+			end
+			return false
+		end
+
+		empty.Visible = false
+		if not current or current:_GetMatchCount() == 0 then
+			selectSubTab(firstMatch)
+		else
+			current:_SetActive(true)
+		end
+		return true
+	end
+
+	function tab:_GetRoot(): Frame
+		return root
+	end
+
+	function tab:Destroy()
+		for _, subtab in subtabs do
+			subtab:Destroy()
+		end
+		table.clear(subtabs)
+		table.clear(buttons)
+		root:Destroy()
+	end
+
+	return tab
+end
+
+return Tab

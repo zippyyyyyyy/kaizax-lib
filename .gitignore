@@ -1,7 +1,15 @@
-node_modules/
-dist/
+# Roblox / Rojo
+*.rbxl
+*.rbxlx
+*.rbxm
+*.rbxmx
+sourcemap.json
+Packages/
+DevPackages/
+ServerPackages/
+
+# Tooling
 build/
-coverage/
 *.log
 .env
 .env.*
