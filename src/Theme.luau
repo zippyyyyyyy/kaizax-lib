@@ -30,9 +30,9 @@ local DEFAULT: Types.Theme = {
 		Mono = Enum.Font.Code,
 	},
 	Radius = {
-		Window = 14,
-		Card = 12,
-		Element = 8,
+		Window = 20,
+		Card = 16,
+		Element = 12,
 		Pill = 999,
 	},
 	Spacing = {

@@ -295,7 +295,7 @@ function Window.new(library: any, options: Options): Window
 		Size = UDim2.fromOffset(10, 10),
 		ZIndex = 3,
 	}, topBar)
-	Util.corner(brandDot, 3)
+	Util.corner(brandDot, 4)
 	Util.paint(brandDot, "BackgroundColor3", "Accent", theme)
 
 	local titleLabel = Util.label({
@@ -348,7 +348,7 @@ function Window.new(library: any, options: Options): Window
 			AutoButtonColor = false,
 			ZIndex = 4,
 		}, topBar)
-		Util.corner(button, 4)
+		Util.corner(button, theme.Radius.Element - 2)
 		return button
 	end
 

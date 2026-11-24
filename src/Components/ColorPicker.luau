@@ -105,7 +105,7 @@ function ColorPicker.new(
 		ClipsDescendants = true,
 	}, row)
 
-	Util.corner(swatch, 6)
+	Util.corner(swatch, theme.Radius.Element - 2)
 	local swatchStroke = Util.stroke(swatch, 1)
 	ctx.Paint(swatchStroke, "Color", "StrokeStrong")
 
@@ -129,7 +129,7 @@ function ColorPicker.new(
 		BorderSizePixel = 0,
 		Size = UDim2.fromScale(1, 1),
 	}, swatch)
-	Util.corner(swatchColor, 5)
+	Util.corner(swatchColor, theme.Radius.Element - 3)
 
 	local function refreshRow()
 		hexLabel.Text = Util.hex(color)
@@ -239,7 +239,7 @@ function ColorPicker.new(
 			Size = UDim2.fromScale(1, 1),
 			ClipsDescendants = true,
 		}, svContainer)
-		Util.corner(svSquare, 6)
+		Util.corner(svSquare, theme.Radius.Element - 2)
 
 		local whiteOverlay = Util.frame({
 			BackgroundColor3 = Color3.new(1, 1, 1),
@@ -352,7 +352,7 @@ function ColorPicker.new(
 			Size = UDim2.fromOffset(3, 16),
 			ZIndex = 5,
 		}, hueContainer)
-		Util.corner(hueMarker, 2)
+		Util.corner(hueMarker, theme.Radius.Element / 3)
 		Util.create("UIStroke", {
 			ApplyStrokeMode = Enum.ApplyStrokeMode.Border,
 			Color = Color3.new(0, 0, 0),
@@ -412,7 +412,7 @@ function ColorPicker.new(
 				Size = UDim2.fromOffset(3, 16),
 				ZIndex = 5,
 			}, alphaContainer)
-			Util.corner(alphaMarker, 2)
+			Util.corner(alphaMarker, theme.Radius.Element / 3)
 			Util.create("UIStroke", {
 				ApplyStrokeMode = Enum.ApplyStrokeMode.Border,
 				Color = Color3.new(0, 0, 0),
@@ -437,7 +437,7 @@ function ColorPicker.new(
 			TextSize = 11,
 			TextXAlignment = Enum.TextXAlignment.Left,
 		}, content)
-		Util.corner(hexBox, 4)
+		Util.corner(hexBox, theme.Radius.Element - 4)
 		Util.padding(hexBox, 9, 0)
 		local hexStroke = Util.stroke(hexBox, 1)
 		ctx.Paint(hexBox, "BackgroundColor3", "SurfaceRaised")
@@ -460,11 +460,11 @@ function ColorPicker.new(
 			Position = UDim2.fromOffset(0, previewY),
 			Size = UDim2.fromOffset(208, 20),
 		}, content)
-		Util.corner(previewContainer, 4)
+		Util.corner(previewContainer, theme.Radius.Element - 4)
 
 		local previewChecker = makeChecker(previewContainer, 208, 20, 5)
 		previewChecker.Size = UDim2.fromScale(1, 1)
-		Util.corner(previewChecker, 4)
+		Util.corner(previewChecker, theme.Radius.Element - 4)
 
 		local previewFill = Util.frame({
 			BackgroundColor3 = color,
@@ -472,7 +472,7 @@ function ColorPicker.new(
 			BorderSizePixel = 0,
 			Size = UDim2.fromScale(1, 1),
 		}, previewContainer)
-		Util.corner(previewFill, 4)
+		Util.corner(previewFill, theme.Radius.Element - 4)
 
 		local previewStroke = Util.stroke(previewContainer, 1)
 		ctx.Paint(previewStroke, "Color", "Stroke")
@@ -500,7 +500,7 @@ function ColorPicker.new(
 				AutoButtonColor = false,
 				LayoutOrder = order,
 			}, footer)
-			Util.corner(button, 4)
+			Util.corner(button, theme.Radius.Element - 4)
 			ctx.Paint(button, "BackgroundColor3", if primary then "Accent" else "SurfaceRaised")
 			local label = Base.text(ctx, button, text, {
 				Font = theme.Fonts.Medium,
