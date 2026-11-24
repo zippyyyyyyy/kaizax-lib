@@ -4894,7 +4894,7 @@ local Players = game:GetService("Players")
 local ReExecute = {}
 
 -- Queued loader reads this path from the executor workspace folder.
-ReExecute.SCRIPT_SOURCE = "Kaizax/kaizax-demo.luau"
+ReExecute.SCRIPT_SOURCE = "https://raw.githubusercontent.com/zippyyyyyyy/kaizax-lib/main/build/kaizax-demo.luau"
 ReExecute.DEBUG = false
 
 local RELOADED_KEY = "__KaizaxReloaded"
