@@ -39,7 +39,7 @@ function SubTab.new(
 		Name = if name then `SubTab_{name}` else "SubTab_General",
 		BackgroundTransparency = 1,
 		BorderSizePixel = 0,
-		Size = UDim2.new(1, -8, 1, 0),
+		Size = UDim2.new(1, -4, 1, 0),
 		CanvasSize = UDim2.new(),
 		AutomaticCanvasSize = Enum.AutomaticSize.Y,
 		ScrollBarThickness = 6,
@@ -56,7 +56,7 @@ function SubTab.new(
 		AutomaticSize = Enum.AutomaticSize.Y,
 		BackgroundTransparency = 1,
 		Position = UDim2.fromOffset(24, 20),
-		Size = UDim2.new(1, -40, 0, 0),
+		Size = UDim2.new(1, -44, 0, 0),
 	}, scroller)
 
 	Util.list(holder, 0)
