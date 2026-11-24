@@ -84,7 +84,7 @@ function Section.new(
 	local query = ""
 	local titleText = options.Name
 	local descriptionText = options.Description
-	local order = 0
+	local order = 1
 
 	local root = Util.frame({
 		Name = `Section_{titleText}`,
@@ -110,36 +110,45 @@ function Section.new(
 
 	local title = Base.text(baseCtx, header, titleText, {
 		Font = theme.Fonts.Medium,
-		Size = 14,
+		Size = 15,
 		ColorRole = "Text",
 	})
 	title.Position = UDim2.fromOffset(0, 0)
 	title.Size = UDim2.fromScale(1, 1)
 
+	local headerRule = Util.frame({
+		Name = "HeaderRule",
+		BackgroundColor3 = theme.Palette.Stroke,
+		BorderSizePixel = 0,
+		LayoutOrder = 1,
+		Size = UDim2.new(1, 0, 0, 1),
+	}, root)
+	baseCtx.Paint(headerRule, "BackgroundColor3", "Stroke")
+
 	local description: TextLabel? = nil
 	if descriptionText and descriptionText ~= "" then
 		description = Base.text(baseCtx, root, descriptionText, {
 			Font = theme.Fonts.Regular,
-			Size = 12,
+			Size = 13,
 			ColorRole = "TextMuted",
 			Wrapped = true,
 		})
 		description.AutomaticSize = Enum.AutomaticSize.Y
 		description.Size = UDim2.new(1, 0, 0, 0)
 		description.LineHeight = 1.4
-		description.LayoutOrder = 1
-		order = 1
+		description.LayoutOrder = 2
+		order = 2
 	end
 
 	local content = Util.frame({
 		Name = "Content",
 		BackgroundTransparency = 1,
-		LayoutOrder = 2,
+		LayoutOrder = 3,
 		Size = UDim2.new(1, 0, 0, 0),
 		AutomaticSize = Enum.AutomaticSize.Y,
 	}, root)
 
-	Util.list(content, 8)
+	Util.list(content, 12)
 
 	local function register(row: GuiObject, searchText: string?)
 		table.insert(entries, {
@@ -276,7 +285,7 @@ function Section.new(
 		local opts: LabelOptions = asOptions(value, "Text")
 		local label = Base.text(ctx, content, opts.Text, {
 			Font = theme.Fonts.Regular,
-			Size = opts.Size or 12.5,
+			Size = opts.Size or 13,
 			ColorRole = opts.ColorRole or "TextMuted",
 		})
 		label.LayoutOrder = nextOrder()
@@ -289,7 +298,7 @@ function Section.new(
 		local opts: ParagraphOptions = asOptions(value, "Text")
 		local paragraph = Base.text(ctx, content, opts.Text, {
 			Font = theme.Fonts.Regular,
-			Size = opts.Size or 12.5,
+			Size = opts.Size or 13,
 			ColorRole = opts.ColorRole or "TextMuted",
 			Wrapped = true,
 		})

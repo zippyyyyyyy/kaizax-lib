@@ -93,7 +93,7 @@ function Search.new(
 		Size = UDim2.new(1, -52, 1, 0),
 		Text = "",
 		TextColor3 = theme.Palette.Text,
-		TextSize = 12.5,
+		TextSize = 13,
 		TextXAlignment = Enum.TextXAlignment.Left,
 		TextYAlignment = Enum.TextYAlignment.Center,
 	}, frame)

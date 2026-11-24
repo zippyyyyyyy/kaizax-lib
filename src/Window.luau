@@ -102,17 +102,31 @@ function Window.new(library: any, options: Options): Window
 		ZIndexBehavior = Enum.ZIndexBehavior.Sibling,
 	}, resolveParent(options.Parent)) :: ScreenGui
 
-	local shadow = Util.frame({
-		Name = "Shadow",
-		BackgroundColor3 = Color3.new(0, 0, 0),
-		BackgroundTransparency = 0.45,
-		BorderSizePixel = 0,
-		Position = UDim2.fromOffset(0, 0),
-		Size = UDim2.fromOffset(width, height),
-		ZIndex = 0,
-	}, gui)
-	Util.corner(shadow, theme.Radius.Window + 4)
-	local shadowScale = Util.create("UIScale", { Scale = 1 }, shadow) :: UIScale
+	local shadowLayers: { { frame: Frame, scale: UIScale, grow: number, y: number, transparency: number } } = {}
+	local shadowSpecs = {
+		{ grow = 24, y = 10, transparency = 0.90, radius = theme.Radius.Window + 12 },
+		{ grow = 16, y = 6, transparency = 0.82, radius = theme.Radius.Window + 8 },
+		{ grow = 8, y = 2, transparency = 0.72, radius = theme.Radius.Window + 4 },
+	}
+	for index, spec in shadowSpecs do
+		local layer = Util.frame({
+			Name = `Shadow_{index}`,
+			BackgroundColor3 = Color3.new(0, 0, 0),
+			BackgroundTransparency = spec.transparency,
+			BorderSizePixel = 0,
+			Position = UDim2.fromOffset(-spec.grow / 2, -spec.grow / 2 + spec.y),
+			Size = UDim2.fromOffset(width + spec.grow, height + spec.grow),
+			ZIndex = 0,
+		}, gui)
+		Util.corner(layer, spec.radius)
+		table.insert(shadowLayers, {
+			frame = layer,
+			scale = Util.create("UIScale", { Scale = 1 }, layer) :: UIScale,
+			grow = spec.grow,
+			y = spec.y,
+			transparency = spec.transparency,
+		})
+	end
 
 	local window = Util.frame({
 		Name = "Window",
@@ -183,6 +197,7 @@ function Window.new(library: any, options: Options): Window
 	}, sidebar)
 	Util.list(tabScroller, 4)
 
+
 	local sidebarFooter = Util.frame({
 		Name = "Footer",
 		BackgroundTransparency = 1,
@@ -206,7 +221,7 @@ function Window.new(library: any, options: Options): Window
 		Size = UDim2.new(1, -24, 0, 14),
 		Text = `Kaizax {library.Version}`,
 		TextColor3 = theme.Palette.TextFaint,
-		TextSize = 10,
+		TextSize = 11,
 		TextXAlignment = Enum.TextXAlignment.Left,
 		TextYAlignment = Enum.TextYAlignment.Center,
 	}, sidebarFooter)
@@ -217,9 +232,9 @@ function Window.new(library: any, options: Options): Window
 		Font = theme.Fonts.Mono,
 		Position = UDim2.fromOffset(12, 26),
 		Size = UDim2.new(1, -24, 0, 14),
-		Text = if toggleKey then `{toggleKey.Name}  ·  toggle` else "",
+		Text = if toggleKey then `{toggleKey.Name} to toggle` else "",
 		TextColor3 = theme.Palette.TextFaint,
-		TextSize = 10,
+		TextSize = 11,
 		TextXAlignment = Enum.TextXAlignment.Left,
 		TextYAlignment = Enum.TextYAlignment.Center,
 		Visible = toggleKey ~= nil,
@@ -245,7 +260,7 @@ function Window.new(library: any, options: Options): Window
 		Name = "DragRegion",
 		BackgroundTransparency = 1,
 		BorderSizePixel = 0,
-		Size = UDim2.new(1, -320, 0, theme.Window.TopBar),
+		Size = UDim2.new(1, -340, 0, theme.Window.TopBar),
 		Text = "",
 		AutoButtonColor = false,
 		ZIndex = 2,
@@ -265,12 +280,12 @@ function Window.new(library: any, options: Options): Window
 	local titleLabel = Util.label({
 		Name = "Title",
 		BackgroundTransparency = 1,
-		Font = theme.Fonts.Bold,
-		Position = UDim2.fromOffset(31, 0),
-		Size = UDim2.new(0.5, -46, 1, 0),
-		Text = string.upper(options.Title or "Kaizax"),
+		Font = theme.Fonts.Medium,
+		Position = UDim2.fromOffset(36, 0),
+		Size = UDim2.new(0.5, -52, 1, 0),
+		Text = options.Title or "Kaizax",
 		TextColor3 = theme.Palette.Text,
-		TextSize = 13,
+		TextSize = 14,
 		TextXAlignment = Enum.TextXAlignment.Left,
 		TextYAlignment = Enum.TextYAlignment.Center,
 		ZIndex = 3,
@@ -291,12 +306,12 @@ function Window.new(library: any, options: Options): Window
 		end,
 	}, topBar, {
 		Placeholder = "Search controls",
-		Width = 210,
+		Width = 220,
 	})
 
 	local searchFrame = search.Instance :: Frame
 	searchFrame.AnchorPoint = Vector2.new(1, 0.5)
-	searchFrame.Position = UDim2.new(1, -100, 0.5, 0)
+	searchFrame.Position = UDim2.new(1, -104, 0.5, 0)
 	searchFrame.ZIndex = 4
 	searchFrame.Visible = false
 
@@ -456,7 +471,7 @@ function Window.new(library: any, options: Options): Window
 			BackgroundColor3 = theme.Palette.Surface,
 			BackgroundTransparency = 0,
 			BorderSizePixel = 0,
-			Size = UDim2.new(1, 0, 0, 40),
+			Size = UDim2.new(1, 0, 0, 36),
 			Text = "",
 			AutoButtonColor = false,
 			LayoutOrder = #tabs,
@@ -467,8 +482,8 @@ function Window.new(library: any, options: Options): Window
 			Name = "Accent",
 			BackgroundColor3 = theme.Palette.Accent,
 			BorderSizePixel = 0,
-			Position = UDim2.fromOffset(0, 10),
-			Size = UDim2.new(0, 2, 0, 20),
+			Position = UDim2.fromOffset(0, 9),
+			Size = UDim2.new(0, 3, 0, 18),
 			Visible = false,
 		}, button)
 		Util.corner(accent, 1)
@@ -476,11 +491,11 @@ function Window.new(library: any, options: Options): Window
 		local label = Util.label({
 			BackgroundTransparency = 1,
 			Font = theme.Fonts.Medium,
-			Position = UDim2.fromOffset(12, 0),
-			Size = UDim2.new(1, -20, 1, 0),
+			Position = UDim2.fromOffset(14, 0),
+			Size = UDim2.new(1, -26, 1, 0),
 			Text = tab.Name,
 			TextColor3 = theme.Palette.TextMuted,
-			TextSize = 12.5,
+			TextSize = 13,
 			TextXAlignment = Enum.TextXAlignment.Left,
 			TextYAlignment = Enum.TextYAlignment.Center,
 			TextTruncate = Enum.TextTruncate.AtEnd,
@@ -594,7 +609,7 @@ function Window.new(library: any, options: Options): Window
 	end
 
 	function self:SetTitle(title: string)
-		titleLabel.Text = string.upper(title)
+		titleLabel.Text = title
 	end
 
 	function self:OnClosed(handler: () -> ()): Signal.Connection
@@ -607,7 +622,9 @@ function Window.new(library: any, options: Options): Window
 
 	function self:_ApplyTheme(nextTheme: Types.Theme)
 		Util.applyTheme(gui, nextTheme)
-		shadow.BackgroundTransparency = 0.45
+		for _, layer in shadowLayers do
+			layer.frame.BackgroundTransparency = layer.transparency
+		end
 		for item in tabButtons do
 			paintTab(item, item == activeTab, false)
 		end
@@ -763,18 +780,20 @@ function Window.new(library: any, options: Options): Window
 	end))
 
 	local function syncShadow()
-		shadow.Size = UDim2.new(
-			window.Size.X.Scale,
-			window.Size.X.Offset + 20,
-			window.Size.Y.Scale,
-			window.Size.Y.Offset + 20
-		)
-		shadow.Position = UDim2.new(
-			window.Position.X.Scale,
-			window.Position.X.Offset - 10,
-			window.Position.Y.Scale,
-			window.Position.Y.Offset - 10
-		)
+		for _, layer in shadowLayers do
+			layer.frame.Size = UDim2.new(
+				window.Size.X.Scale,
+				window.Size.X.Offset + layer.grow,
+				window.Size.Y.Scale,
+				window.Size.Y.Offset + layer.grow
+			)
+			layer.frame.Position = UDim2.new(
+				window.Position.X.Scale,
+				window.Position.X.Offset - layer.grow / 2,
+				window.Position.Y.Scale,
+				window.Position.Y.Offset - layer.grow / 2 + layer.y
+			)
+		end
 	end
 
 	bag:Add(window:GetPropertyChangedSignal("Size"):Connect(syncShadow))
@@ -789,7 +808,9 @@ function Window.new(library: any, options: Options): Window
 		), 0.35, 1)
 
 		scale.Scale = nextScale
-		shadowScale.Scale = nextScale
+		for _, layer in shadowLayers do
+			layer.scale.Scale = nextScale
+		end
 		updateSearchVisibility()
 	end
 
@@ -975,18 +996,18 @@ function Window.new(library: any, options: Options): Window
 		local subtitle = Util.label({
 			BackgroundTransparency = 1,
 			Font = theme.Fonts.Mono,
-			Position = UDim2.new(0, 36, 0, 36),
-			Size = UDim2.new(0.5, -46, 0, 14),
+			Position = UDim2.new(0, 36, 0, 38),
+			Size = UDim2.new(0.5, -52, 0, 14),
 			Text = options.Subtitle,
-			TextColor3 = theme.Palette.TextFaint,
-			TextSize = 10,
+			TextColor3 = theme.Palette.TextMuted,
+			TextSize = 11,
 			TextXAlignment = Enum.TextXAlignment.Left,
 			TextYAlignment = Enum.TextYAlignment.Center,
 			ZIndex = 3,
 		}, topBar)
-		Util.paint(subtitle, "TextColor3", "TextFaint", theme)
-		titleLabel.Position = UDim2.fromOffset(36, 12)
-		titleLabel.Size = UDim2.new(0.5, -46, 0, 22)
+		Util.paint(subtitle, "TextColor3", "TextMuted", theme)
+		titleLabel.Position = UDim2.fromOffset(36, 10)
+		titleLabel.Size = UDim2.new(0.5, -52, 0, 24)
 	end
 
 	self.Instance = gui

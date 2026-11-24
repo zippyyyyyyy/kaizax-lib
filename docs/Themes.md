@@ -67,17 +67,17 @@ Use `Kaizax.Util.paint(instance, "BackgroundColor3", "Surface", theme)` to bind 
 
 | Token | Hex |
 | --- | --- |
-| `Background` | `#0A0B0F` |
-| `Surface` | `#13151B` |
-| `SurfaceRaised` | `#1A1D25` |
-| `Hover` | `#232731` |
-| `Stroke` | `#2A2E38` |
-| `StrokeStrong` | `#3B414E` |
+| `Background` | `#0B0D12` |
+| `Surface` | `#12151C` |
+| `SurfaceRaised` | `#1A1E27` |
+| `Hover` | `#202531` |
+| `Stroke` | `#272C36` |
+| `StrokeStrong` | `#3A4150` |
 | `Accent` | `#00FAB4` |
 | `OnAccent` | `#04120D` |
-| `Text` | `#F2F3F7` |
-| `TextMuted` | `#A2A7B8` |
-| `TextFaint` | `#7D8397` |
+| `Text` | `#F5F7FA` |
+| `TextMuted` | `#9BA3B5` |
+| `TextFaint` | `#7A8294` |
 | `Danger` | `#FF5D73` |
 | `Warning` | `#FFC24B` |
 | `Success` | `#3DDC97` |
@@ -154,15 +154,15 @@ Use `Kaizax.Util.paint(instance, "BackgroundColor3", "Surface", theme)` to bind 
 | `Bold` | `Enum.Font.GothamBold` |
 | `Mono` | `Enum.Font.Code` |
 
-Mono is reserved for numeric readouts, version text, and the toggle-key hint. Titles use `Bold`; labels and section headings use `Medium`; body copy uses `Regular`.
+Mono is reserved for numeric readouts, version text, and the toggle-key hint. Titles use `Medium`; labels and section headings use `Medium`; body copy uses `Regular`.
 
 ### Radius
 
 | Token | Default |
 | --- | --- |
-| `Window` | 12 |
-| `Card` | 10 |
-| `Element` | 6 |
+| `Window` | 14 |
+| `Card` | 12 |
+| `Element` | 8 |
 | `Pill` | 999 |
 
 ### Spacing
@@ -182,13 +182,13 @@ Layouts use a 4px rhythm. Section padding is 16px, card gaps are 8px, and contro
 
 | Token | Default |
 | --- | --- |
-| `Width` | 960 |
-| `Height` | 680 |
-| `MinWidth` | 720 |
-| `MinHeight` | 520 |
-| `Sidebar` | 224 |
-| `TopBar` | 52 |
-| `PageHeader` | 92 |
+| `Width` | 1040 |
+| `Height` | 720 |
+| `MinWidth` | 760 |
+| `MinHeight` | 560 |
+| `Sidebar` | 240 |
+| `TopBar` | 56 |
+| `PageHeader` | 100 |
 | `Padding` | 24 |
 | `RowHeight` | 40 |
 

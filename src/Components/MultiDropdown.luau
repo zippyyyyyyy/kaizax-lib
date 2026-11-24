@@ -85,7 +85,7 @@ function MultiDropdown.new(
 
 	local valueLabel = Base.text(ctx, button, placeholder, {
 		Font = theme.Fonts.Mono,
-		Size = 12.5,
+		Size = 13,
 		ColorRole = "TextFaint",
 		XAlign = Enum.TextXAlignment.Left,
 	})
@@ -303,7 +303,7 @@ function MultiDropdown.new(
 
 			local optionLabel = Base.text(ctx, optionRow, item, {
 				Font = theme.Fonts.Regular,
-				Size = 12.5,
+				Size = 13,
 				ColorRole = if selected[item] then "Text" else "TextMuted",
 				XAlign = Enum.TextXAlignment.Left,
 			})

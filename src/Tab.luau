@@ -29,6 +29,7 @@ export type Tab = {
 type ButtonEntry = {
 	button: TextButton,
 	label: TextLabel,
+	underline: Frame,
 }
 
 function Tab.new(
@@ -53,24 +54,24 @@ function Tab.new(
 	local header = Util.frame({
 		Name = "Header",
 		BackgroundTransparency = 1,
-		Size = UDim2.new(1, 0, 0, 92),
+		Size = UDim2.new(1, 0, 0, theme.Window.PageHeader),
 	}, root)
 
 	local title = Base.text(ctx, header, titleText, {
-		Font = theme.Fonts.Bold,
-		Size = 24,
+		Font = theme.Fonts.Medium,
+		Size = 28,
 		ColorRole = "Text",
 	})
 	title.Position = UDim2.fromOffset(24, 18)
-	title.Size = UDim2.new(0.56, -24, 0, 30)
+	title.Size = UDim2.new(0.56, -24, 0, 34)
 
 	local subtitle = Base.text(ctx, header, description, {
 		Font = theme.Fonts.Regular,
-		Size = 12.5,
+		Size = 13,
 		ColorRole = "TextMuted",
 	})
-	subtitle.Position = UDim2.fromOffset(24, 50)
-	subtitle.Size = UDim2.new(0.56, -24, 0, 18)
+	subtitle.Position = UDim2.fromOffset(24, 56)
+	subtitle.Size = UDim2.new(0.56, -24, 0, 20)
 	subtitle.Visible = description ~= ""
 
 	local bar = Util.frame({
@@ -79,11 +80,11 @@ function Tab.new(
 		AutomaticSize = Enum.AutomaticSize.X,
 		BackgroundColor3 = theme.Palette.Surface,
 		BorderSizePixel = 0,
-		Position = UDim2.new(1, -24, 0, 20),
-		Size = UDim2.fromOffset(0, 32),
+		Position = UDim2.new(1, -24, 0, 24),
+		Size = UDim2.fromOffset(0, 36),
 		Visible = false,
 	}, header)
-	Util.corner(bar, 6)
+	Util.corner(bar, theme.Radius.Element)
 	local barStroke = Util.stroke(bar, 1)
 	ctx.Paint(bar, "BackgroundColor3", "Surface")
 	ctx.Paint(barStroke, "Color", "Stroke")
@@ -96,7 +97,7 @@ function Tab.new(
 		Name = "Divider",
 		BackgroundColor3 = theme.Palette.Stroke,
 		BorderSizePixel = 0,
-		Position = UDim2.fromOffset(0, 92),
+		Position = UDim2.fromOffset(0, theme.Window.PageHeader),
 		Size = UDim2.new(1, 0, 0, 1),
 	}, root)
 	ctx.Paint(divider, "BackgroundColor3", "Stroke")
@@ -104,8 +105,8 @@ function Tab.new(
 	local body = Util.frame({
 		Name = "Body",
 		BackgroundTransparency = 1,
-		Position = UDim2.fromOffset(0, 93),
-		Size = UDim2.new(1, 0, 1, -93),
+		Position = UDim2.fromOffset(0, theme.Window.PageHeader + 1),
+		Size = UDim2.new(1, 0, 1, -(theme.Window.PageHeader + 1)),
 	}, root)
 
 	local empty = Base.text(ctx, body, "No controls match your search.", {
@@ -135,6 +136,7 @@ function Tab.new(
 
 		ctx.Paint(entry.button, "BackgroundColor3", backgroundRole)
 		ctx.Paint(entry.label, "TextColor3", labelRole)
+		entry.underline.Visible = active
 		Animation.play(entry.button, current.Motion.Fast, {
 			BackgroundColor3 = ctx.Color(backgroundRole),
 			BackgroundTransparency = if active or hovered then 0 else 1,
@@ -175,11 +177,11 @@ function Tab.new(
 			Text = "",
 			AutoButtonColor = false,
 		}, bar)
-		Util.corner(button, 4)
+		Util.corner(button, 5)
 
 		local label = Base.text(ctx, button, name, {
 			Font = theme.Fonts.Medium,
-			Size = 12.5,
+			Size = 13,
 			ColorRole = "TextMuted",
 			XAlign = Enum.TextXAlignment.Center,
 		})
@@ -187,9 +189,22 @@ function Tab.new(
 		label.Size = UDim2.new(0, 0, 1, 0)
 		Util.padding(button, 12, 0)
 
+		local underline = Util.frame({
+			Name = "Underline",
+			AnchorPoint = Vector2.new(0.5, 1),
+			BackgroundColor3 = theme.Palette.Accent,
+			BorderSizePixel = 0,
+			Position = UDim2.fromScale(0.5, 1),
+			Size = UDim2.new(1, -16, 0, 2),
+			Visible = false,
+		}, button)
+		Util.corner(underline, 1)
+		ctx.Paint(underline, "BackgroundColor3", "Accent")
+
 		buttons[subtab] = {
 			button = button,
 			label = label,
+			underline = underline,
 		}
 
 		button.MouseEnter:Connect(function()

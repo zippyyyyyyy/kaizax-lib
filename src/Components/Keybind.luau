@@ -129,9 +129,9 @@ function Keybind.new(
 
 		Util.corner(modeButton, theme.Radius.Element)
 		Util.stroke(modeButton, 1)
-		modeLabel = Base.text(ctx, modeButton, string.upper(mode), {
+		modeLabel = Base.text(ctx, modeButton, mode, {
 			Font = theme.Fonts.Medium,
-			Size = 10,
+			Size = 11,
 			ColorRole = "TextMuted",
 			XAlign = Enum.TextXAlignment.Center,
 		})
@@ -197,7 +197,7 @@ function Keybind.new(
 			modeButton.Active = not disabled
 			ctx.Paint(modeButton, "BackgroundColor3", "Surface")
 			ctx.Paint(modeLabel, "TextColor3", "TextMuted")
-			modeLabel.Text = string.upper(mode)
+			modeLabel.Text = mode
 			modeButton.BackgroundColor3 = ctx.Color("Surface")
 			modeButton.BackgroundTransparency = 0
 			modeLabel.TextColor3 = ctx.Color("TextMuted")

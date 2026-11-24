@@ -145,7 +145,7 @@ function Notification.new(
 
 		local title = Util.label({
 			BackgroundTransparency = 1,
-			Font = theme.Fonts.Bold,
+			Font = theme.Fonts.Medium,
 			Size = UDim2.new(1, -70, 0, 20),
 			Text = options.Title,
 			TextColor3 = theme.Palette.Text,
@@ -164,7 +164,7 @@ function Notification.new(
 			Size = UDim2.new(1, -32, 0, 38),
 			Text = message,
 			TextColor3 = theme.Palette.TextMuted,
-			TextSize = 12.5,
+			TextSize = 13,
 			TextWrapped = true,
 			TextXAlignment = Enum.TextXAlignment.Left,
 			TextYAlignment = Enum.TextYAlignment.Top,

@@ -10,8 +10,8 @@ return function(Library: any)
 
 	local window = Library:CreateWindow({
 		Title = "Kaizax",
-		Subtitle = "interface lab",
-		Size = Vector2.new(960, 680),
+		Subtitle = "Interface lab",
+		Size = Vector2.new(1040, 720),
 		ToggleKey = Enum.KeyCode.RightShift,
 	})
 

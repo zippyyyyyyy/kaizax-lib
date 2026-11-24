@@ -17,7 +17,7 @@ Creates a `ScreenGui` and the window shell. The first window becomes active.
 | `Title` | `string?` | `"Kaizax"` | Rendered uppercase in the top bar |
 | `Subtitle` | `string?` | `nil` | Mono subtitle under the title |
 | `Theme` | `string \| ThemeOverrides?` | active theme | Applies globally before the window is built |
-| `Size` | `Vector2?` | `900 × 620` | Logical pixels before viewport scaling |
+| `Size` | `Vector2?` | `1040 × 720` | Logical pixels before viewport scaling |
 | `Position` | `Vector2?` | centered | Logical offset |
 | `ToggleKey` | `Enum.KeyCode \| false?` | `RightShift` | `false` disables the hotkey |
 | `DisplayOrder` | `number?` | `100` | `ScreenGui.DisplayOrder` |

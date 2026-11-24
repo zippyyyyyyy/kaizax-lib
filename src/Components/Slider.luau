@@ -85,7 +85,7 @@ function Slider.new(
 
 	local valueLabel = Base.text(ctx, row, "", {
 		Font = theme.Fonts.Mono,
-		Size = 12.5,
+		Size = 13,
 		ColorRole = "TextMuted",
 		XAlign = Enum.TextXAlignment.Right,
 	})

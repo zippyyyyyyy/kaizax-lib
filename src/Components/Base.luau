@@ -30,7 +30,7 @@ function Base.text(
 		BackgroundTransparency = 1,
 		Text = text,
 		Font = opts.Font or theme.Fonts.Regular,
-		TextSize = opts.Size or 12.5,
+		TextSize = opts.Size or 13,
 		TextColor3 = theme.Palette.TextMuted,
 		TextXAlignment = opts.XAlign or Enum.TextXAlignment.Left,
 		TextYAlignment = opts.YAlign or Enum.TextYAlignment.Center,
@@ -63,7 +63,7 @@ function Base.row(
 	if text and text ~= "" then
 		label = Base.text(ctx, row, text, {
 			Font = theme.Fonts.Medium,
-			Size = 12.5,
+			Size = 13,
 			ColorRole = "TextMuted",
 		})
 		label.Size = UDim2.new(1, -200, 1, 0)
