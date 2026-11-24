@@ -2,7 +2,13 @@
 -- tools/bundle.mjs, so both locals are in scope.
 
 local app = Demo(Kaizax)
-local genv = getgenv()
+
+local genv: any = _G
+pcall(function()
+	if typeof(getgenv) == "function" then
+		genv = getgenv()
+	end
+end)
 
 genv.KaizaxApp = app
 genv.KaizaxLibrary = Kaizax
@@ -12,7 +18,7 @@ if STATE and STATE.onCleanup then
 		genv.KaizaxApp = nil
 		genv.KaizaxLibrary = nil
 		pcall(function()
-			Kaizax:Destroy()
+			Kaizax:Unload()
 		end)
 	end)
 end

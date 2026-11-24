@@ -8,6 +8,8 @@ local Section = require(script.Parent.Section)
 local SubTab = {}
 SubTab.__index = SubTab
 
+local GUTTER = 20
+
 export type Options = {
 	Name: string,
 }
@@ -39,7 +41,7 @@ function SubTab.new(
 		Name = if name then `SubTab_{name}` else "SubTab_General",
 		BackgroundTransparency = 1,
 		BorderSizePixel = 0,
-		Size = UDim2.new(1, -4, 1, -20),
+		Size = UDim2.new(1, 0, 1, 0),
 		CanvasSize = UDim2.new(),
 		AutomaticCanvasSize = Enum.AutomaticSize.Y,
 		ScrollBarThickness = 4,
@@ -55,8 +57,8 @@ function SubTab.new(
 		Name = "Content",
 		AutomaticSize = Enum.AutomaticSize.Y,
 		BackgroundTransparency = 1,
-		Position = UDim2.fromOffset(24, 20),
-		Size = UDim2.new(1, -44, 0, 0),
+		Position = UDim2.fromOffset(GUTTER, 20),
+		Size = UDim2.new(1, -(GUTTER * 2), 0, 0),
 	}, scroller)
 
 	Util.list(holder, 0)
@@ -147,12 +149,12 @@ function SubTab.new(
 		scroller.Visible = value
 
 		if value and not wasActive then
-			holder.Position = UDim2.fromOffset(24, 28)
+			holder.Position = UDim2.fromOffset(GUTTER, 28)
 			Animation.play(holder, ctx.GetTheme().Motion.Slow, {
-				Position = UDim2.fromOffset(24, 20),
+				Position = UDim2.fromOffset(GUTTER, 20),
 			}, { easing = "Sine", direction = "InOut" })
 		elseif not value then
-			holder.Position = UDim2.fromOffset(24, 20)
+			holder.Position = UDim2.fromOffset(GUTTER, 20)
 		end
 	end
 

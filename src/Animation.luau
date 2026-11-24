@@ -8,6 +8,8 @@ local Animation = {}
 
 Animation.ANIMATIONS_ENABLED = true
 Animation.INTRO_ENABLED = true
+Animation.GLOW_ENABLED = true
+Animation.GLOW_PULSE = true
 
 local EASING: { [string]: EasingStyle } = {
 	Linear = Enum.EasingStyle.Linear,
@@ -138,6 +140,21 @@ function Animation.stop(instance: Instance, property: string?)
 	end
 end
 
+--- Cancels every tracked tween under a root subtree.
+function Animation.stopSubtree(root: Instance)
+	local tweens: { Tween } = {}
+	for instance, properties in tracked do
+		if instance == root or instance:IsDescendantOf(root) then
+			for _, tween in properties do
+				tweens[#tweens + 1] = tween
+			end
+		end
+	end
+	for _, tween in tweens do
+		Animation.cancel(tween)
+	end
+end
+
 --- Cancels tracked tweens with a tag under a root subtree.
 function Animation.stopTagged(root: Instance, tag: string)
 	for instance, properties in tracked do
@@ -212,6 +229,43 @@ function Animation.cancel(tween: Tween?)
 	end
 	if tween then
 		forgetTween(tween)
+	end
+end
+
+function Animation.setOriginal(instance: Instance, property: string, value: number)
+	instance:SetAttribute(ORIGINAL_ATTRIBUTE .. property, value)
+end
+
+--- Stores current transparencies before anything is hidden or faded.
+function Animation.captureSubtree(root: Instance)
+	local targets: { Instance } = { root }
+	for _, descendant in root:GetDescendants() do
+		targets[#targets + 1] = descendant
+	end
+
+	for _, instance in targets do
+		local isStroke = instance:IsA("UIStroke")
+		local isGui = instance:IsA("GuiObject")
+		if not isStroke and not isGui then
+			continue
+		end
+		for _, property in FADE_PROPERTIES do
+			if property == "Transparency" and not isStroke then
+				continue
+			end
+			if property ~= "Transparency" and not isGui then
+				continue
+			end
+			if typeof(instance:GetAttribute(ORIGINAL_ATTRIBUTE .. property)) == "number" then
+				continue
+			end
+			local ok, value = pcall(function()
+				return (instance :: any)[property]
+			end)
+			if ok and typeof(value) == "number" then
+				instance:SetAttribute(ORIGINAL_ATTRIBUTE .. property, value)
+			end
+		end
 	end
 end
 

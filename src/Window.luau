@@ -11,6 +11,8 @@ local Button = require(script.Parent.Components.Button)
 local Search = require(script.Parent.Components.Search)
 local Tab = require(script.Parent.Tab)
 
+local GUI_NAME = "KaizaxInterfaceLab"
+
 local Window = {}
 Window.__index = Window
 
@@ -32,6 +34,7 @@ export type Window = {
 	Introduced: Signal.Signal,
 	CreateTab: (self: Window, options: any) -> any,
 	SelectTab: (self: Window, target: any) -> (),
+	SetToggleKey: (self: Window, key: (Enum.KeyCode | boolean)?) -> (),
 	GetTabs: (self: Window) -> { any },
 	GetActiveTab: (self: Window) -> any,
 	Notify: (self: Window, options: Types.NotificationOptions) -> (),
@@ -76,7 +79,8 @@ function Window.new(library: any, options: Options): Window
 	local bag = Util.bag()
 	local popupBag = Util.bag()
 	local tabs: { any } = {}
-	local tabButtons: { [any]: { button: TextButton, hover: Frame, label: TextLabel, order: number, finalPosition: UDim2 } } = {}
+	local tabButtons: { [any]: { button: TextButton, order: number, finalPosition: UDim2 } } = {}
+	local hoveredTab: any = nil
 	local activeTab: any = nil
 	local activePopup: any = nil
 	local Introduced = Signal.new()
@@ -84,6 +88,7 @@ function Window.new(library: any, options: Options): Window
 	local openRequested = true
 	local introGeneration = 0
 	local initializing = true
+	local savedActiveTab = library:_GetConfig().ActiveTab
 	local basePosition: UDim2? = nil
 	local expandedSize: UDim2? = nil
 	local closed = Signal.new()
@@ -102,27 +107,44 @@ function Window.new(library: any, options: Options): Window
 	local footerHeight = theme.Window.Footer
 	local cornerRadius = theme.Radius.Window
 
+	local guiParent = resolveParent(options.Parent)
+	for _, child in guiParent:GetChildren() do
+		if child:IsA("ScreenGui") and (child.Name == "Kaizax" or child.Name == GUI_NAME) then
+			child:Destroy()
+		end
+	end
+
 	local gui = Util.create("ScreenGui", {
-		Name = "Kaizax",
+		Name = GUI_NAME,
 		DisplayOrder = options.DisplayOrder or 100,
 		Enabled = false,
 		IgnoreGuiInset = true,
 		ResetOnSpawn = false,
 		ZIndexBehavior = Enum.ZIndexBehavior.Sibling,
-	}, resolveParent(options.Parent)) :: ScreenGui
+	}, guiParent) :: ScreenGui
 
-	local windowShadow = Util.frame({
-		Name = "WindowShadow",
-		BackgroundColor3 = theme.Palette.Background,
-		BackgroundTransparency = 0.35,
+	local GLOW_RING_COUNT = 16
+	local GLOW_STEP = 2
+	local GLOW_PULSE_MIN = -0.04
+	local GLOW_PULSE_MAX = 0.04
+
+	local glow = Util.frame({
+		Name = "Glow",
+		Active = false,
+		BackgroundTransparency = 1,
 		BorderSizePixel = 0,
-		Position = UDim2.fromOffset(0, 6),
+		ClipsDescendants = false,
+		Interactable = false,
+		Position = UDim2.fromOffset(0, 0),
 		Size = UDim2.fromOffset(width, height),
+		Visible = Animation.GLOW_ENABLED,
 		ZIndex = 0,
 	}, gui)
-	Util.corner(windowShadow, cornerRadius)
-	Util.paint(windowShadow, "BackgroundColor3", "Background", theme)
-	local shadowTransparency = windowShadow.BackgroundTransparency
+
+	local glowPulseValue = Instance.new("NumberValue")
+	glowPulseValue.Name = "GlowPulse"
+	glowPulseValue.Value = 0
+	glowPulseValue.Parent = gui
 
 	local window = Util.frame({
 		Name = "Window",
@@ -139,12 +161,105 @@ function Window.new(library: any, options: Options): Window
 	Util.paint(windowStroke, "Color", "Stroke", theme)
 	Util.gradient(window, "PanelShade", 90, theme)
 
-	local function syncWindowShadow()
-		windowShadow.Position = window.Position + UDim2.fromOffset(0, 6)
-		windowShadow.Size = window.Size
+	local glowRings: { { frame: Frame, stroke: UIStroke, corner: UICorner, base: number } } = {}
+	for index = 1, GLOW_RING_COUNT do
+		local base = 0.82 + 0.18 * (((index - 1) / (GLOW_RING_COUNT - 1)) ^ 0.6)
+		local ring = Util.frame({
+			Name = `Ring_{index}`,
+			Active = false,
+			BackgroundTransparency = 1,
+			BorderSizePixel = 0,
+			Interactable = false,
+			ZIndex = 0,
+		}, glow)
+		local ringCorner = Util.corner(ring, cornerRadius + GLOW_STEP * index)
+		local ringStroke = Util.stroke(ring, 2, base)
+		Util.paint(ringStroke, "Color", "Accent", theme)
+		Animation.setOriginal(ringStroke, "Transparency", base)
+		glowRings[index] = {
+			frame = ring,
+			stroke = ringStroke,
+			corner = ringCorner,
+			base = base,
+		}
 	end
-	bag:Add(window:GetPropertyChangedSignal("Position"):Connect(syncWindowShadow))
-	bag:Add(window:GetPropertyChangedSignal("Size"):Connect(syncWindowShadow))
+
+	local function syncGlow()
+		glow.Position = UDim2.fromOffset(
+			math.floor(window.Position.X.Offset + 0.5),
+			math.floor(window.Position.Y.Offset + 0.5)
+		)
+		glow.Size = UDim2.fromOffset(
+			math.floor(window.Size.X.Offset + 0.5),
+			math.floor(window.Size.Y.Offset + 0.5)
+		)
+		local glowWidth = math.floor(window.Size.X.Offset + 0.5)
+		local glowHeight = math.floor(window.Size.Y.Offset + 0.5)
+		for index, ring in glowRings do
+			local offset = GLOW_STEP * index
+			ring.frame.Position = UDim2.fromOffset(-offset, -offset)
+			ring.frame.Size = UDim2.fromOffset(glowWidth + offset * 2, glowHeight + offset * 2)
+			ring.corner.CornerRadius = UDim.new(0, cornerRadius + offset)
+		end
+	end
+	bag:Add(window:GetPropertyChangedSignal("Position"):Connect(syncGlow))
+	bag:Add(window:GetPropertyChangedSignal("Size"):Connect(syncGlow))
+	syncGlow()
+
+	local function applyGlowTransparency(offset: number)
+		for _, ring in glowRings do
+			ring.stroke.Transparency = math.clamp(ring.base + offset, 0, 1)
+		end
+	end
+	bag:Add(glowPulseValue:GetPropertyChangedSignal("Value"):Connect(function()
+		applyGlowTransparency(glowPulseValue.Value)
+	end))
+
+	local glowPulseTween: Tween? = nil
+
+	local function stopGlowPulse()
+		if glowPulseTween then
+			Animation.cancel(glowPulseTween)
+			glowPulseTween = nil
+		end
+		glowPulseValue.Value = 0
+	end
+
+	local function fadeGlow(alpha: number, options: any?)
+		local fadeOptions = options or {}
+		if fadeOptions.IncludeDescendants == nil then
+			fadeOptions.IncludeDescendants = true
+		end
+		Animation.fade(glow, alpha, fadeOptions)
+	end
+
+	local function restoreGlow()
+		fadeGlow(1, { Duration = 0, Tag = "KaizaxGlow" })
+		glow.Visible = Animation.GLOW_ENABLED
+		applyGlowTransparency(0)
+	end
+
+	local function startGlowPulse()
+		stopGlowPulse()
+		glow.Visible = Animation.GLOW_ENABLED
+		if not Animation.GLOW_ENABLED or not Animation.GLOW_PULSE
+			or not Animation.enabled() or not gui.Enabled
+		then
+			applyGlowTransparency(0)
+			return
+		end
+		glowPulseValue.Value = GLOW_PULSE_MIN
+		applyGlowTransparency(GLOW_PULSE_MIN)
+		glowPulseTween = Animation.play(glowPulseValue, 3, {
+			Value = GLOW_PULSE_MAX,
+		}, {
+			easing = "Sine",
+			direction = "InOut",
+			repeatCount = -1,
+			reverses = true,
+			tag = "KaizaxGlowPulse",
+		})
+	end
 
 	local scale = Util.create("UIScale", { Scale = 1 }, window) :: UIScale
 	local introScale = Util.create("UIScale", { Scale = 1 }, window) :: UIScale
@@ -197,17 +312,10 @@ function Window.new(library: any, options: Options): Window
 	Util.paint(sideSurface, "BackgroundColor3", "Surface", theme)
 	Util.gradient(sideSurface, "PanelShade", 90, theme)
 
+	cornerFiller("SideFillLeft", sideSurface, UDim2.fromOffset(0, 0), "Surface", "PanelStart")
 	cornerFiller("SideFillTop", sideSurface, UDim2.fromOffset(theme.Window.Sidebar - cornerRadius, 0), "Surface", "PanelStart")
 	cornerFiller("SideFillBottom", sideSurface, UDim2.new(1, -cornerRadius, 1, -cornerRadius), "Surface", "PanelEnd")
 
-	local windowCornerFill = cornerFiller(
-		"WindowCornerFill",
-		window,
-		UDim2.new(1, -cornerRadius, 1, -cornerRadius),
-		"Background",
-		"PanelEnd"
-	)
-	windowCornerFill.ZIndex = 10
 
 	local topBar = Util.frame({
 		Name = "TopBar",
@@ -245,32 +353,33 @@ function Window.new(library: any, options: Options): Window
 	}, sidebar)
 	Util.paint(sidebarDivider, "BackgroundColor3", "Stroke", theme)
 
-	local tabScroller = Util.scrollingFrame({
-		Name = "Tabs",
+	local tabList = Util.frame({
+		Name = "TabList",
 		BackgroundTransparency = 1,
 		BorderSizePixel = 0,
+		ClipsDescendants = false,
 		Position = UDim2.fromOffset(8, 10),
 		Size = UDim2.new(1, -24, 1, -(footerHeight + 16)),
-		CanvasSize = UDim2.new(),
-		AutomaticCanvasSize = Enum.AutomaticSize.Y,
-		ScrollBarThickness = 4,
-		ScrollBarImageColor3 = theme.Palette.StrokeStrong,
-		ScrollBarImageTransparency = 0.15,
-		ScrollingDirection = Enum.ScrollingDirection.Y,
-		ElasticBehavior = Enum.ElasticBehavior.WhenScrollable,
-		ZIndex = 4,
+		ZIndex = 3,
 	}, sidebar)
-	Util.paint(tabScroller, "ScrollBarImageColor3", "StrokeStrong", theme)
 
-	local tabRail = Util.frame({
-		Name = "TabRail",
+	local indicatorLayer = Util.frame({
+		Name = "IndicatorLayer",
 		BackgroundTransparency = 1,
 		BorderSizePixel = 0,
-		ClipsDescendants = true,
-		Position = tabScroller.Position,
-		Size = tabScroller.Size,
-		ZIndex = 5,
-	}, sidebar)
+		ClipsDescendants = false,
+		Size = UDim2.fromScale(1, 1),
+		ZIndex = 1,
+	}, tabList)
+
+	local tabsLayer = Util.frame({
+		Name = "TabsLayer",
+		BackgroundTransparency = 1,
+		BorderSizePixel = 0,
+		ClipsDescendants = false,
+		Size = UDim2.fromScale(1, 1),
+		ZIndex = 2,
+	}, tabList)
 
 	local activeIndicator = Util.frame({
 		Name = "ActiveIndicator",
@@ -279,8 +388,8 @@ function Window.new(library: any, options: Options): Window
 		Position = UDim2.fromOffset(0, 0),
 		Size = UDim2.new(1, 0, 0, 36),
 		Visible = false,
-		ZIndex = 5,
-	}, tabRail)
+		ZIndex = 1,
+	}, indicatorLayer)
 
 	local indicatorSurface = Util.frame({
 		Name = "Surface",
@@ -290,7 +399,7 @@ function Window.new(library: any, options: Options): Window
 		ClipsDescendants = true,
 		Position = UDim2.fromScale(0, 0.5),
 		Size = UDim2.new(1, 0, 0, 36),
-		ZIndex = 5,
+		ZIndex = 1,
 	}, activeIndicator)
 	Util.corner(indicatorSurface, theme.Radius.Element)
 	Util.gradient(indicatorSurface, "PillShade", 0, theme)
@@ -303,11 +412,26 @@ function Window.new(library: any, options: Options): Window
 		BorderSizePixel = 0,
 		Position = UDim2.fromOffset(6, 18),
 		Size = UDim2.fromOffset(3, 24),
-		ZIndex = 6,
+		ZIndex = 2,
 	}, indicatorSurface)
 	Util.corner(indicatorBar, theme.Radius.Pill)
 	Util.paint(indicatorBar, "BackgroundColor3", "Accent", theme)
 	Util.gradient(indicatorBar, "AccentBar", 90, theme)
+
+	local hoverFill = Util.frame({
+		Name = "HoverFill",
+		Active = false,
+		AnchorPoint = Vector2.new(0, 0),
+		BackgroundColor3 = theme.Palette.Hover,
+		BackgroundTransparency = 1,
+		BorderSizePixel = 0,
+		Interactable = false,
+		Position = UDim2.fromOffset(0, 0),
+		Size = UDim2.new(1, 0, 0, 36),
+		ZIndex = 0,
+	}, indicatorLayer)
+	Util.corner(hoverFill, theme.Radius.Element)
+	Util.paint(hoverFill, "BackgroundColor3", "Hover", theme)
 
 	local sidebarFooter = Util.frame({
 		Name = "Footer",
@@ -507,7 +631,7 @@ function Window.new(library: any, options: Options): Window
 	end
 
 	local function indicatorY(order: number): number
-		return (order - 1) * 40 - tabScroller.CanvasPosition.Y
+		return (order - 1) * 40
 	end
 
 	local indicatorGeneration = 0
@@ -550,38 +674,84 @@ function Window.new(library: any, options: Options): Window
 		end)
 	end
 
-	bag:Add(tabScroller:GetPropertyChangedSignal("CanvasPosition"):Connect(function()
-		moveIndicator(activeTab, false)
-	end))
+	local function isTabHovered(entry: any): boolean
+		local mouseLocation = UserInputService:GetMouseLocation()
+		local position = entry.button.AbsolutePosition
+		local size = entry.button.AbsoluteSize
+		return mouseLocation.X >= position.X
+			and mouseLocation.X <= position.X + size.X
+			and mouseLocation.Y >= position.Y
+			and mouseLocation.Y <= position.Y + size.Y
+	end
 
-	local function paintTab(target: any, active: boolean, hovered: boolean)
+	local function moveHoverFill(target: any, animate: boolean)
+		local entry = tabButtons[target]
+		if not entry then
+			return
+		end
+
+		local y = math.floor(indicatorY(entry.order) + 0.5)
+		Animation.stop(hoverFill, "Position")
+		if not animate or hoverFill.BackgroundTransparency >= 0.999 then
+			hoverFill.Position = UDim2.fromOffset(0, y)
+		else
+			Animation.play(hoverFill, 0.12, {
+				Position = UDim2.fromOffset(0, y),
+			}, {
+				easing = "Quad",
+				direction = "Out",
+				tag = "KaizaxHoverFill",
+			})
+		end
+	end
+
+	local function setTabVisual(target: any, state: string)
 		local entry = tabButtons[target]
 		if not entry then
 			return
 		end
 
 		local current = library:_GetTheme()
-		local labelRole = if active then "Text" elseif hovered then "Text" else "TextMuted"
-		local hoverTransparency = if active then 1 elseif hovered then 0.45 else 1
+		local labelRole = if state == "active" then "Text" else "TextMuted"
+		local targetColor = if state == "active"
+			then current.Palette.Text
+			elseif state == "hover"
+			then current.Palette.TextMuted:Lerp(current.Palette.Text, 0.4)
+			else current.Palette.TextMuted
 
-		Util.paint(entry.hover, "BackgroundColor3", "Hover")
-		Util.paint(entry.label, "TextColor3", labelRole)
+		Util.paint(entry.button, "TextColor3", labelRole)
 
-		Animation.play(entry.hover, Animation.MOTION.Hover.Duration, {
-			BackgroundColor3 = current.Palette.Hover,
-			BackgroundTransparency = hoverTransparency,
-		}, {
-			easing = Animation.MOTION.Hover.Easing,
-			direction = Animation.MOTION.Hover.Direction,
-			tag = "KaizaxTabPaint",
-		})
-		Animation.play(entry.label, Animation.MOTION.Label.Duration, {
-			TextColor3 = (current.Palette :: any)[labelRole],
+		Animation.stop(entry.button, "TextColor3")
+		Animation.play(entry.button, Animation.MOTION.Label.Duration, {
+			TextColor3 = targetColor,
 		}, {
 			easing = Animation.MOTION.Label.Easing,
 			direction = Animation.MOTION.Label.Direction,
 			tag = "KaizaxTabPaint",
 		})
+
+		if state == "hover" then
+			hoveredTab = target
+			moveHoverFill(target, true)
+			Animation.stop(hoverFill, "BackgroundTransparency")
+			Animation.play(hoverFill, 0.12, {
+				BackgroundTransparency = 0.85,
+			}, {
+				easing = Animation.MOTION.Hover.Easing,
+				direction = Animation.MOTION.Hover.Direction,
+				tag = "KaizaxHoverFill",
+			})
+		elseif hoveredTab == target then
+			hoveredTab = nil
+			Animation.stop(hoverFill, "BackgroundTransparency")
+			Animation.play(hoverFill, 0.12, {
+				BackgroundTransparency = 1,
+			}, {
+				easing = Animation.MOTION.Hover.Easing,
+				direction = Animation.MOTION.Hover.Direction,
+				tag = "KaizaxHoverFill",
+			})
+		end
 	end
 
 	local function selectTab(target: any)
@@ -593,15 +763,23 @@ function Window.new(library: any, options: Options): Window
 			activeTab:SetVisible(false)
 		end
 		activeTab = target
+		if not initializing then
+			library:_SetConfigValue("ActiveTab", target.Name)
+		end
 		if initializing then
 			target:PlayIntro(false)
 		else
 			target:SetVisible(true)
 		end
-		for item in tabButtons do
-			paintTab(item, item == target, false)
+		for tab in tabButtons do
+			if tab == target then
+				setTabVisual(tab, "active")
+			elseif isTabHovered(tabButtons[tab]) then
+				setTabVisual(tab, "hover")
+			else
+				setTabVisual(tab, "idle")
+			end
 		end
-		tabScroller.CanvasPosition = Vector2.new(0, 0)
 		for _, subtab in target:GetSubTabs() do
 			subtab.Instance.CanvasPosition = Vector2.new(0, 0)
 		end
@@ -615,18 +793,28 @@ function Window.new(library: any, options: Options): Window
 
 	local function restoreIntroVisuals()
 		Animation.stopTagged(window, "KaizaxIntro")
-		Animation.stop(windowShadow, "BackgroundTransparency")
+		stopGlowPulse()
+		restoreGlow()
 		Animation.stop(introScale)
 		Animation.stop(brandDotScale)
 		introScale.Scale = 1
 		brandDotScale.Scale = 1
-		windowShadow.BackgroundTransparency = shadowTransparency
+		for _, descendant in content:GetDescendants() do
+			if descendant:IsA("GuiObject") and descendant:GetAttribute("KaizaxStatusDot") then
+				local dotScale = descendant:FindFirstChildOfClass("UIScale")
+				if dotScale then
+					dotScale.Scale = 1
+				end
+			end
+		end
 		if basePosition then
 			window.Position = basePosition
 		end
 		Animation.fade(window, 1, { Duration = 0, Tag = "KaizaxIntro" })
-		for _, entry in tabButtons do
+		for tab, entry in tabButtons do
 			entry.button.Position = entry.finalPosition
+			entry.button.TextTransparency = 0
+			setTabVisual(tab, if tab == activeTab then "active" elseif isTabHovered(entry) then "hover" else "idle")
 		end
 		if activeTab then
 			moveIndicator(activeTab, false)
@@ -636,6 +824,7 @@ function Window.new(library: any, options: Options): Window
 	local function playIntro()
 		introGeneration += 1
 		local generation = introGeneration
+		Animation.captureSubtree(gui)
 		local finalPosition = basePosition or window.Position
 		finalPosition = UDim2.fromOffset(
 			math.floor(finalPosition.X.Offset),
@@ -654,11 +843,13 @@ function Window.new(library: any, options: Options): Window
 			if activeTab then
 				activeTab:PlayIntro(false)
 			end
+			startGlowPulse()
 			Introduced:Fire()
 			return
 		end
 
-		windowShadow.BackgroundTransparency = 1
+		stopGlowPulse()
+		fadeGlow(0, { Duration = 0, IncludeDescendants = true, Tag = "KaizaxIntro" })
 		window.Position = UDim2.fromOffset(
 			math.floor(finalPosition.X.Offset),
 			math.floor(finalPosition.Y.Offset + 16)
@@ -667,7 +858,7 @@ function Window.new(library: any, options: Options): Window
 
 		Animation.fade(window, 0, { Duration = 0, IncludeDescendants = false, Tag = "KaizaxIntro" })
 		Animation.fade(windowStroke, 0, { Duration = 0, Tag = "KaizaxIntro" })
-		for _, surface in { topSurface, sideSurface, windowCornerFill } do
+		for _, surface in { topSurface, sideSurface } do
 			Animation.fade(surface, 0, { Duration = 0, IncludeDescendants = false, Tag = "KaizaxIntro" })
 		end
 		Animation.fade(topBar, 0, { Duration = 0, Tag = "KaizaxIntro" })
@@ -678,17 +869,22 @@ function Window.new(library: any, options: Options): Window
 		for _, entry in tabButtons do
 			entry.button.Position = UDim2.fromOffset(entry.finalPosition.X.Offset - 12, entry.finalPosition.Y.Offset)
 			Animation.fade(entry.button, 0, { Duration = 0, Tag = "KaizaxIntro" })
+			entry.button.TextTransparency = 0.25
 		end
 
 		local enter = Animation.MOTION.Enter
-		Animation.play(windowShadow, 0.4, {
-			BackgroundTransparency = shadowTransparency,
-		}, { easing = "Quad", direction = "Out", tag = "KaizaxIntro" })
 
 		task.delay(0.05, function()
 			if generation ~= introGeneration or not gui.Enabled then
 				return
 			end
+			fadeGlow(1, {
+				Duration = 0.4,
+				Easing = "Quad",
+				Direction = "Out",
+				IncludeDescendants = true,
+				Tag = "KaizaxIntro",
+			})
 			Animation.fade(window, 1, {
 				Duration = enter.Duration,
 				Easing = enter.Easing,
@@ -702,7 +898,7 @@ function Window.new(library: any, options: Options): Window
 				Direction = enter.Direction,
 				Tag = "KaizaxIntro",
 			})
-			for _, surface in { topSurface, sideSurface, windowCornerFill } do
+			for _, surface in { topSurface, sideSurface } do
 				Animation.fade(surface, 1, {
 					Duration = enter.Duration,
 					Easing = enter.Easing,
@@ -824,10 +1020,17 @@ function Window.new(library: any, options: Options): Window
 			end
 		end)
 
+		task.delay(0.46, function()
+			if generation == introGeneration and gui.Enabled then
+				startGlowPulse()
+			end
+		end)
+
 		task.delay(0.92, function()
 			if generation == introGeneration and gui.Enabled then
 				window.Position = finalPosition
 				restoreIntroVisuals()
+				startGlowPulse()
 			end
 		end)
 	end
@@ -836,6 +1039,7 @@ function Window.new(library: any, options: Options): Window
 		introGeneration += 1
 		local generation = introGeneration
 		Animation.stopTagged(window, "KaizaxIntro")
+		stopGlowPulse()
 
 		if not Animation.enabled() or Animation.reducedMotion() then
 			gui.Enabled = false
@@ -844,6 +1048,12 @@ function Window.new(library: any, options: Options): Window
 		end
 
 		local exit = Animation.MOTION.Exit
+		fadeGlow(0, {
+			Duration = exit.Duration,
+			Easing = exit.Easing,
+			Direction = exit.Direction,
+			Tag = "KaizaxGlowClose",
+		})
 		Animation.fade(window, 0, {
 			Duration = exit.Duration,
 			Easing = exit.Easing,
@@ -901,58 +1111,39 @@ function Window.new(library: any, options: Options): Window
 		local finalPosition = UDim2.fromOffset(0, (order - 1) * 40)
 		local button = Util.textButton({
 			Name = `TabButton_{tab.Name}`,
+			AutoButtonColor = false,
 			BackgroundTransparency = 1,
 			BorderSizePixel = 0,
+			Font = theme.Fonts.Medium,
+			LayoutOrder = order,
 			Position = finalPosition,
 			Size = UDim2.new(1, 0, 0, 36),
-			Text = "",
-			AutoButtonColor = false,
-			LayoutOrder = order,
-			ZIndex = 5,
-		}, tabScroller)
-
-		local hover = Util.frame({
-			Name = "HoverFill",
-			BackgroundColor3 = theme.Palette.Hover,
-			BackgroundTransparency = 1,
-			BorderSizePixel = 0,
-			Size = UDim2.fromScale(1, 1),
-			ZIndex = 4,
-		}, button)
-		Util.corner(hover, theme.Radius.Element)
-		Util.paint(hover, "BackgroundColor3", "Hover", theme)
-
-		local label = Util.label({
-			BackgroundTransparency = 1,
-			Font = theme.Fonts.Medium,
-			Position = UDim2.fromOffset(21, 0),
-			Size = UDim2.new(1, -33, 1, 0),
 			Text = tab.Name,
 			TextColor3 = theme.Palette.TextMuted,
 			TextSize = 13,
+			TextTruncate = Enum.TextTruncate.AtEnd,
 			TextXAlignment = Enum.TextXAlignment.Left,
 			TextYAlignment = Enum.TextYAlignment.Center,
-			TextTruncate = Enum.TextTruncate.AtEnd,
-			ZIndex = 7,
-		}, button)
-		Util.paint(label, "TextColor3", "TextMuted", theme)
+			ZIndex = 2,
+		}, tabsLayer)
+		Util.padding(button, 21, 0)
+		Util.paint(button, "TextColor3", "TextMuted", theme)
+		Animation.setOriginal(button, "TextTransparency", 0)
 
 		tabButtons[tab] = {
 			button = button,
-			hover = hover,
-			label = label,
 			order = order,
 			finalPosition = finalPosition,
 		}
 
 		bag:Add(button.MouseEnter:Connect(function()
 			if activeTab ~= tab then
-				paintTab(tab, false, true)
+				setTabVisual(tab, "hover")
 			end
 		end))
 
 		bag:Add(button.MouseLeave:Connect(function()
-			paintTab(tab, activeTab == tab, false)
+			setTabVisual(tab, if activeTab == tab then "active" else "idle")
 		end))
 
 		bag:Add(button.Activated:Connect(function()
@@ -960,6 +1151,9 @@ function Window.new(library: any, options: Options): Window
 		end))
 
 		if not activeTab then
+			selectTab(tab)
+		end
+		if savedActiveTab == tab.Name then
 			selectTab(tab)
 		end
 
@@ -1057,6 +1251,21 @@ function Window.new(library: any, options: Options): Window
 		titleLabel.Text = title
 	end
 
+	function self:SetToggleKey(key: (Enum.KeyCode | boolean)?)
+		if key == false then
+			toggleKey = nil
+			library:_SetConfigValue("ToggleKey", "Disabled")
+		elseif key == nil or key == true then
+			toggleKey = Enum.KeyCode.RightShift
+			library:_SetConfigValue("ToggleKey", toggleKey.Name)
+		else
+			toggleKey = key :: Enum.KeyCode
+			library:_SetConfigValue("ToggleKey", toggleKey.Name)
+		end
+		toggleHint.Text = if toggleKey then `{toggleKey.Name} to toggle` else ""
+		toggleHint.Visible = toggleKey ~= nil
+	end
+
 	function self:OnClosed(handler: () -> ()): Signal.Connection
 		return closed:Connect(handler)
 	end
@@ -1067,8 +1276,21 @@ function Window.new(library: any, options: Options): Window
 
 	function self:_ApplyTheme(nextTheme: Types.Theme)
 		Util.applyTheme(gui, nextTheme)
-		for item in tabButtons do
-			paintTab(item, item == activeTab, false)
+		for tab, entry in tabButtons do
+			setTabVisual(tab, if tab == activeTab then "active" elseif isTabHovered(entry) then "hover" else "idle")
+		end
+	end
+
+	function self:_ApplyRuntimeConfig(key: string, value: any)
+		if key ~= "GlowEnabled" and key ~= "GlowPulse" then
+			return
+		end
+		if not Animation.GLOW_ENABLED or not Animation.GLOW_PULSE then
+			stopGlowPulse()
+		end
+		restoreGlow()
+		if gui.Enabled and openRequested then
+			startGlowPulse()
 		end
 	end
 
@@ -1100,6 +1322,7 @@ function Window.new(library: any, options: Options): Window
 			(math.floor(targetY + 0.5) - parentPosition.Y) / currentScale
 		)
 		basePosition = window.Position
+		library:_SetConfigValue("Position", { X = targetX, Y = targetY })
 	end
 
 	local function clampWindow()
@@ -1254,6 +1477,7 @@ function Window.new(library: any, options: Options): Window
 		local nextHeight = math.floor(math.clamp(resizeStartSize.Y.Offset + delta.Y, theme.Window.MinHeight, maxHeight) + 0.5)
 
 		window.Size = UDim2.fromOffset(nextWidth, nextHeight)
+		library:_SetConfigValue("Size", { X = nextWidth, Y = nextHeight })
 		updateSearchVisibility()
 		clampWindow()
 	end))
@@ -1404,7 +1628,10 @@ function Window.new(library: any, options: Options): Window
 
 	function self:Destroy()
 		self:_ClosePopup(nil)
+		stopGlowPulse()
+		Animation.stopSubtree(gui)
 		closed:DisconnectAll()
+		Introduced:DisconnectAll()
 		bag:Clear()
 		search:Destroy()
 		searchBag:Clear()
@@ -1490,6 +1717,9 @@ function Window.new(library: any, options: Options): Window
 
 	task.defer(function()
 		if initializing then
+			if activeTab and library:_GetConfig().ActiveTab ~= activeTab.Name then
+				library:_SetConfigValue("ActiveTab", activeTab.Name)
+			end
 			initializing = false
 			playIntro()
 		end

@@ -107,9 +107,9 @@ return function(Library: any)
 		Text = "Copy session label",
 		Variant = "Secondary",
 		Callback = function()
-			if setclipboard then
-				setclipboard(`Kaizax session: {userName}`)
-				report("Session label copied")
+			if typeof(setclipboard) == "function" then
+				local ok = pcall(setclipboard, `Kaizax session: {userName}`)
+				report(if ok then "Session label copied" else "Clipboard unavailable")
 			else
 				report("Clipboard unavailable")
 			end
@@ -477,6 +477,40 @@ return function(Library: any)
 		Variant = "Danger",
 		Callback = function()
 			window:SetOpen(false)
+		end,
+	})
+
+	paletteSection:CreateDivider()
+
+	paletteSection:CreateToggle({
+		Text = "Auto re-execute on server switch",
+		Default = Library:GetConfig().AutoReexecute,
+		Callback = function(value)
+			Library:SetConfigValue("AutoReexecute", value)
+		end,
+	})
+
+	paletteSection:CreateToggle({
+		Text = "Only re-execute in the same game",
+		Default = Library:GetConfig().OnlySameGame,
+		Callback = function(value)
+			Library:SetConfigValue("OnlySameGame", value)
+		end,
+	})
+
+	paletteSection:CreateToggle({
+		Text = "Accent glow",
+		Default = Library:GetConfig().GlowEnabled,
+		Callback = function(value)
+			Library:SetConfigValue("GlowEnabled", value)
+		end,
+	})
+
+	paletteSection:CreateToggle({
+		Text = "Glow breathing",
+		Default = Library:GetConfig().GlowPulse,
+		Callback = function(value)
+			Library:SetConfigValue("GlowPulse", value)
 		end,
 	})
 

@@ -9,6 +9,8 @@ local SubTab = require(script.Parent.SubTab)
 local Tab = {}
 Tab.__index = Tab
 
+local GUTTER = 20
+
 export type Options = {
 	Name: string,
 	Description: string?,
@@ -64,8 +66,8 @@ function Tab.new(
 		Size = 28,
 		ColorRole = "Text",
 	})
-	title.Position = UDim2.fromOffset(24, 16)
-	title.Size = UDim2.new(0.56, -24, 0, 34)
+	title.Position = UDim2.fromOffset(GUTTER, 16)
+	title.Size = UDim2.new(0.56, -GUTTER, 0, 34)
 
 	local subtitle = Base.text(ctx, header, description, {
 		Font = theme.Fonts.Medium,
@@ -73,8 +75,8 @@ function Tab.new(
 		ColorRole = "TextMuted",
 		Truncate = false,
 	})
-	subtitle.Position = UDim2.fromOffset(24, 57)
-	subtitle.Size = UDim2.new(0.56, -24, 0, 24)
+	subtitle.Position = UDim2.fromOffset(GUTTER, 57)
+	subtitle.Size = UDim2.new(0.56, -GUTTER, 0, 24)
 	subtitle.Visible = description ~= ""
 
 	local bar = Util.frame({
@@ -83,7 +85,7 @@ function Tab.new(
 		AutomaticSize = Enum.AutomaticSize.X,
 		BackgroundColor3 = theme.Palette.Surface,
 		BorderSizePixel = 0,
-		Position = UDim2.new(1, -24, 0, 24),
+		Position = UDim2.new(1, -GUTTER, 0, 24),
 		Size = UDim2.fromOffset(0, 36),
 		Visible = false,
 	}, header)
@@ -280,8 +282,8 @@ function Tab.new(
 	end
 
 	local finalBodyPosition = UDim2.fromOffset(0, theme.Window.PageHeader + 1)
-	local finalTitlePosition = UDim2.fromOffset(24, 16)
-	local finalSubtitlePosition = UDim2.fromOffset(24, 58)
+	local finalTitlePosition = UDim2.fromOffset(GUTTER, 16)
+	local finalSubtitlePosition = UDim2.fromOffset(GUTTER, 58)
 	local transitionId = 0
 	local transitionState = "idle"
 	local sectionFinals: { [Instance]: UDim2 } = {}

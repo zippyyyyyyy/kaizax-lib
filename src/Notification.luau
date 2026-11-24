@@ -81,6 +81,12 @@ function Notification.new(
 		layout(true)
 
 		local theme = getTheme()
+		Animation.fade(toast.frame, 0, {
+			Duration = theme.Motion.Fast,
+			Easing = "Quad",
+			Direction = "In",
+			Tag = "KaizaxToast",
+		})
 		local exitTarget = UDim2.new(1, TOAST_WIDTH + 40, 0, toast.frame.Position.Y.Offset)
 		local tween = Animation.play(toast.frame, theme.Motion.Fast, {
 			Position = exitTarget,
