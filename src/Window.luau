@@ -144,14 +144,34 @@ function Window.new(library: any, options: Options): Window
 
 	local scale = Util.create("UIScale", { Scale = 1 }, window) :: UIScale
 
-	local topBar = Util.frame({
-		Name = "TopBar",
+	local topSurface = Util.frame({
+		Name = "TopSurface",
 		BackgroundColor3 = theme.Palette.Surface,
 		BorderSizePixel = 0,
-		Size = UDim2.new(1, 0, 0, theme.Window.TopBar),
+		Size = UDim2.new(1, 0, 0, theme.Window.TopBar + theme.Radius.Window),
 		ZIndex = 2,
 	}, window)
-	Util.paint(topBar, "BackgroundColor3", "Surface", theme)
+	Util.corner(topSurface, theme.Radius.Window)
+	Util.paint(topSurface, "BackgroundColor3", "Surface", theme)
+
+	local sideSurface = Util.frame({
+		Name = "SideSurface",
+		BackgroundColor3 = theme.Palette.Surface,
+		BorderSizePixel = 0,
+		Position = UDim2.fromOffset(0, theme.Window.TopBar),
+		Size = UDim2.new(0, theme.Window.Sidebar, 1, -theme.Window.TopBar),
+		ZIndex = 2,
+	}, window)
+	Util.corner(sideSurface, theme.Radius.Window)
+	Util.paint(sideSurface, "BackgroundColor3", "Surface", theme)
+
+	local topBar = Util.frame({
+		Name = "TopBar",
+		BackgroundTransparency = 1,
+		BorderSizePixel = 0,
+		Size = UDim2.new(1, 0, 0, theme.Window.TopBar),
+		ZIndex = 3,
+	}, window)
 
 	local topDivider = Util.frame({
 		Name = "TopDivider",
@@ -165,13 +185,12 @@ function Window.new(library: any, options: Options): Window
 
 	local sidebar = Util.frame({
 		Name = "Sidebar",
-		BackgroundColor3 = theme.Palette.Surface,
+		BackgroundTransparency = 1,
 		BorderSizePixel = 0,
 		Position = UDim2.fromOffset(0, theme.Window.TopBar),
 		Size = UDim2.new(0, theme.Window.Sidebar, 1, -theme.Window.TopBar),
-		ZIndex = 2,
+		ZIndex = 3,
 	}, window)
-	Util.paint(sidebar, "BackgroundColor3", "Surface", theme)
 
 	local sidebarDivider = Util.frame({
 		Name = "SidebarDivider",
@@ -194,6 +213,7 @@ function Window.new(library: any, options: Options): Window
 		ScrollBarImageColor3 = theme.Palette.StrokeStrong,
 		ScrollingDirection = Enum.ScrollingDirection.Y,
 		ElasticBehavior = Enum.ElasticBehavior.WhenScrollable,
+		ZIndex = 4,
 	}, sidebar)
 	Util.list(tabScroller, 4)
 
@@ -204,7 +224,7 @@ function Window.new(library: any, options: Options): Window
 		ClipsDescendants = true,
 		Position = tabScroller.Position,
 		Size = tabScroller.Size,
-		ZIndex = 3,
+		ZIndex = 5,
 	}, sidebar)
 
 	local activeIndicator = Util.frame({
@@ -214,7 +234,7 @@ function Window.new(library: any, options: Options): Window
 		Position = UDim2.fromOffset(0, 9),
 		Size = UDim2.fromOffset(3, 18),
 		Visible = false,
-		ZIndex = 4,
+		ZIndex = 6,
 	}, tabRail)
 	Util.corner(activeIndicator, theme.Radius.Pill)
 	Util.paint(activeIndicator, "BackgroundColor3", "Accent", theme)
@@ -551,6 +571,7 @@ function Window.new(library: any, options: Options): Window
 			Text = "",
 			AutoButtonColor = false,
 			LayoutOrder = order,
+			ZIndex = 5,
 		}, tabScroller)
 		Util.corner(button, theme.Radius.Element)
 		local tabScale = Base.pressable(button, bag)
@@ -570,6 +591,7 @@ function Window.new(library: any, options: Options): Window
 			TextXAlignment = Enum.TextXAlignment.Left,
 			TextYAlignment = Enum.TextYAlignment.Center,
 			TextTruncate = Enum.TextTruncate.AtEnd,
+			ZIndex = 6,
 		}, button)
 
 		Util.paint(button, "BackgroundColor3", "Surface", theme)
