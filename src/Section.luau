@@ -95,6 +95,7 @@ function Section.new(
 	}, parent)
 
 	Util.corner(root, theme.Radius.Card)
+	Util.gradient(root, "PanelShade", 90, theme)
 	local stroke = Util.stroke(root, 1)
 	baseCtx.Paint(root, "BackgroundColor3", "Surface")
 	baseCtx.Paint(stroke, "Color", "Stroke")

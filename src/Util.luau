@@ -21,6 +21,81 @@ local COLOR_PROPERTIES = {
 }
 
 local COLOR_ATTRIBUTE = "KaizaxColor_"
+local GRADIENT_ATTRIBUTE = "KaizaxGradient_"
+
+local function white(): Color3
+	return Color3.new(1, 1, 1)
+end
+
+local function towardWhite(color: Color3, amount: number): Color3
+	return white():Lerp(color, amount)
+end
+
+local function gradientColor(kind: string, palette: any): ColorSequence?
+	if kind == "PanelShade" then
+		return ColorSequence.new({
+			ColorSequenceKeypoint.new(0, white()),
+			ColorSequenceKeypoint.new(1, palette.Text:Lerp(palette.Background, 0.2)),
+		})
+	elseif kind == "PanelStart" then
+		return ColorSequence.new({
+			ColorSequenceKeypoint.new(0, white()),
+			ColorSequenceKeypoint.new(1, white()),
+		})
+	elseif kind == "PanelEnd" then
+		local color = palette.Text:Lerp(palette.Background, 0.2)
+		return ColorSequence.new({
+			ColorSequenceKeypoint.new(0, color),
+			ColorSequenceKeypoint.new(1, color),
+		})
+	elseif kind == "TopShade" then
+		return ColorSequence.new({
+			ColorSequenceKeypoint.new(0, towardWhite(palette.Accent, 0.08)),
+			ColorSequenceKeypoint.new(0.35, white()),
+			ColorSequenceKeypoint.new(1, towardWhite(palette.Stroke, 0.08)),
+		})
+	elseif kind == "TopStart" then
+		local color = towardWhite(palette.Accent, 0.08)
+		return ColorSequence.new({
+			ColorSequenceKeypoint.new(0, color),
+			ColorSequenceKeypoint.new(1, color),
+		})
+	elseif kind == "TopEnd" then
+		local color = towardWhite(palette.Stroke, 0.08)
+		return ColorSequence.new({
+			ColorSequenceKeypoint.new(0, color),
+			ColorSequenceKeypoint.new(1, color),
+		})
+	elseif kind == "PrimaryShade" then
+		return ColorSequence.new({
+			ColorSequenceKeypoint.new(0, white()),
+			ColorSequenceKeypoint.new(1, towardWhite(palette.Accent:Lerp(palette.Info, 0.25), 0.16)),
+		})
+	elseif kind == "AccentBar" then
+		return ColorSequence.new({
+			ColorSequenceKeypoint.new(0, white()),
+			ColorSequenceKeypoint.new(1, towardWhite(palette.Accent:Lerp(palette.OnAccent, 0.22), 0.18)),
+		})
+	elseif kind == "PillShade" then
+		return ColorSequence.new({
+			ColorSequenceKeypoint.new(0, towardWhite(palette.Accent, 0.07)),
+			ColorSequenceKeypoint.new(1, white()),
+		})
+	end
+	return nil
+end
+
+local function applyGradient(gradient: UIGradient, palette: any)
+	local kind = gradient:GetAttribute(GRADIENT_ATTRIBUTE .. "Kind")
+	if typeof(kind) ~= "string" then
+		return
+	end
+
+	local sequence = gradientColor(kind, palette)
+	if sequence then
+		gradient.Color = sequence
+	end
+end
 
 local function addProperties(instance: Instance, properties: { [string]: any }?)
 	if not properties then
@@ -75,6 +150,17 @@ function Util.corner(parent: Instance, radius: number): UICorner
 	return Util.create("UICorner", {
 		CornerRadius = UDim.new(0, radius),
 	}, parent) :: UICorner
+end
+
+function Util.gradient(parent: Instance, kind: string, rotation: number?, theme: Types.Theme?): UIGradient
+	local gradient = Util.create("UIGradient", {
+		Rotation = rotation or 0,
+	}, parent) :: UIGradient
+	gradient:SetAttribute(GRADIENT_ATTRIBUTE .. "Kind", kind)
+	if theme then
+		applyGradient(gradient, theme.Palette)
+	end
+	return gradient
 end
 
 function Util.stroke(parent: Instance, thickness: number?, transparency: number?): UIStroke
@@ -186,6 +272,9 @@ function Util.applyTheme(root: Instance, theme: Types.Theme)
 					(instance :: any)[property] = color
 				end
 			end
+		end
+		if instance:IsA("UIGradient") then
+			applyGradient(instance, palette)
 		end
 	end
 

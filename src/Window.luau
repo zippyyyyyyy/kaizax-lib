@@ -75,7 +75,7 @@ function Window.new(library: any, options: Options): Window
 	local bag = Util.bag()
 	local popupBag = Util.bag()
 	local tabs: { any } = {}
-	local tabButtons: { [any]: { button: TextButton, label: TextLabel, order: number } } = {}
+	local tabButtons: { [any]: { button: TextButton, pill: Frame, label: TextLabel, order: number, pillGradient: UIGradient } } = {}
 	local activeTab: any = nil
 	local activePopup: any = nil
 	local minimized = false
@@ -129,6 +129,7 @@ function Window.new(library: any, options: Options): Window
 	local windowStroke = Util.stroke(window, 1)
 	Util.paint(window, "BackgroundColor3", "Background", theme)
 	Util.paint(windowStroke, "Color", "Stroke", theme)
+	Util.gradient(window, "PanelShade", 90, theme)
 
 	local function syncWindowShadow()
 		windowShadow.Position = window.Position + UDim2.fromOffset(0, 6)
@@ -148,8 +149,15 @@ function Window.new(library: any, options: Options): Window
 	}, window)
 	Util.corner(topSurface, cornerRadius)
 	Util.paint(topSurface, "BackgroundColor3", "Surface", theme)
+	Util.gradient(topSurface, "TopShade", 0, theme)
 
-	local function cornerFiller(name: string, parent: Instance, position: UDim2, role: string): Frame
+	local function cornerFiller(
+		name: string,
+		parent: Instance,
+		position: UDim2,
+		role: string,
+		gradientKind: string?
+	): Frame
 		local filler = Util.frame({
 			Name = name,
 			BackgroundColor3 = (theme.Palette :: any)[role],
@@ -159,11 +167,14 @@ function Window.new(library: any, options: Options): Window
 			ZIndex = 2,
 		}, parent)
 		Util.paint(filler, "BackgroundColor3", role, theme)
+		if gradientKind then
+			Util.gradient(filler, gradientKind, 0, theme)
+		end
 		return filler
 	end
 
-	cornerFiller("TopFillLeft", topSurface, UDim2.fromOffset(0, theme.Window.TopBar - cornerRadius), "Surface")
-	cornerFiller("TopFillRight", topSurface, UDim2.new(1, -cornerRadius, 1, -cornerRadius), "Surface")
+	cornerFiller("TopFillLeft", topSurface, UDim2.fromOffset(0, theme.Window.TopBar - cornerRadius), "Surface", "TopStart")
+	cornerFiller("TopFillRight", topSurface, UDim2.new(1, -cornerRadius, 1, -cornerRadius), "Surface", "TopEnd")
 
 	local sideSurface = Util.frame({
 		Name = "SideSurface",
@@ -175,15 +186,17 @@ function Window.new(library: any, options: Options): Window
 	}, window)
 	Util.corner(sideSurface, cornerRadius)
 	Util.paint(sideSurface, "BackgroundColor3", "Surface", theme)
+	Util.gradient(sideSurface, "PanelShade", 90, theme)
 
-	cornerFiller("SideFillTop", sideSurface, UDim2.fromOffset(theme.Window.Sidebar - cornerRadius, 0), "Surface")
-	cornerFiller("SideFillBottom", sideSurface, UDim2.new(1, -cornerRadius, 1, -cornerRadius), "Surface")
+	cornerFiller("SideFillTop", sideSurface, UDim2.fromOffset(theme.Window.Sidebar - cornerRadius, 0), "Surface", "PanelStart")
+	cornerFiller("SideFillBottom", sideSurface, UDim2.new(1, -cornerRadius, 1, -cornerRadius), "Surface", "PanelEnd")
 
 	local windowCornerFill = cornerFiller(
 		"WindowCornerFill",
 		window,
 		UDim2.new(1, -cornerRadius, 1, -cornerRadius),
-		"Background"
+		"Background",
+		"PanelEnd"
 	)
 	windowCornerFill.ZIndex = 10
 
@@ -262,6 +275,7 @@ function Window.new(library: any, options: Options): Window
 	}, tabRail)
 	Util.corner(activeIndicator, theme.Radius.Pill)
 	Util.paint(activeIndicator, "BackgroundColor3", "Accent", theme)
+	Util.gradient(activeIndicator, "AccentBar", 90, theme)
 
 	local sidebarFooter = Util.frame({
 		Name = "Footer",
@@ -519,10 +533,11 @@ function Window.new(library: any, options: Options): Window
 		local backgroundRole = if active then "SurfaceRaised" elseif hovered then "Hover" else "Surface"
 		local labelRole = if active then "Text" elseif hovered then "Text" else "TextMuted"
 
-		Util.paint(entry.button, "BackgroundColor3", backgroundRole, current)
+		Util.paint(entry.pill, "BackgroundColor3", backgroundRole, current)
 		Util.paint(entry.label, "TextColor3", labelRole, current)
+		entry.pillGradient.Enabled = active
 
-		Animation.play(entry.button, current.Motion.Normal, {
+		Animation.play(entry.pill, current.Motion.Normal, {
 			BackgroundColor3 = (current.Palette :: any)[backgroundRole],
 		}, { easing = "Sine", direction = "InOut" })
 		Animation.play(entry.label, current.Motion.Normal, {
@@ -588,8 +603,7 @@ function Window.new(library: any, options: Options): Window
 
 		local button = Util.textButton({
 			Name = `TabButton_{tab.Name}`,
-			BackgroundColor3 = theme.Palette.Surface,
-			BackgroundTransparency = 0,
+			BackgroundTransparency = 1,
 			BorderSizePixel = 0,
 			Size = UDim2.new(1, 0, 0, 36),
 			Text = "",
@@ -597,7 +611,17 @@ function Window.new(library: any, options: Options): Window
 			LayoutOrder = order,
 			ZIndex = 5,
 		}, tabScroller)
-		Util.corner(button, theme.Radius.Element)
+
+		local pill = Util.frame({
+			Name = "Pill",
+			BackgroundColor3 = theme.Palette.Surface,
+			BorderSizePixel = 0,
+			Size = UDim2.fromScale(1, 1),
+			ZIndex = 4,
+		}, button)
+		Util.corner(pill, theme.Radius.Element)
+		local pillGradient = Util.gradient(pill, "PillShade", 0, theme)
+		pillGradient.Enabled = false
 		Util.padding(button, 20, 0)
 		local buttonList = Util.list(button, 0, Enum.FillDirection.Horizontal)
 		buttonList.VerticalAlignment = Enum.VerticalAlignment.Center
@@ -620,13 +644,15 @@ function Window.new(library: any, options: Options): Window
 			ZIndex = 6,
 		}, button)
 
-		Util.paint(button, "BackgroundColor3", "Surface", theme)
+		Util.paint(pill, "BackgroundColor3", "Surface", theme)
 		Util.paint(label, "TextColor3", "TextMuted", theme)
 
 		tabButtons[tab] = {
 			button = button,
+			pill = pill,
 			label = label,
 			order = order,
+			pillGradient = pillGradient,
 		}
 
 		bag:Add(button.MouseEnter:Connect(function()
@@ -746,7 +772,7 @@ function Window.new(library: any, options: Options): Window
 	end
 
 	local searchBag = Util.bag()
-	searchBag:Add(search.OnChanged(function(query)
+	searchBag:Add(search:OnChanged(function(query)
 		if activeTab then
 			activeTab:_ApplySearch(query)
 		end

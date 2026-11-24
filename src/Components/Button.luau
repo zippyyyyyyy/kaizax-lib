@@ -44,14 +44,24 @@ function Button.new(
 	local instance = Util.textButton({
 		Name = "Button",
 		AutoButtonColor = false,
-		BackgroundTransparency = 0,
+		BackgroundTransparency = 1,
 		BorderSizePixel = 0,
 		Size = UDim2.new(1, 0, 0, options.Height or 32),
 		Text = "",
 		Active = not disabled,
 	}, parent)
 
-	Util.corner(instance, theme.Radius.Element)
+	local surface = Util.frame({
+		Name = "Surface",
+		BackgroundColor3 = theme.Palette.SurfaceRaised,
+		BorderSizePixel = 0,
+		Size = UDim2.fromScale(1, 1),
+		ZIndex = 1,
+	}, instance)
+	Util.corner(surface, theme.Radius.Element)
+	if variant == "Primary" then
+		Util.gradient(surface, "PrimaryShade", 0, theme)
+	end
 
 	local label = Base.text(ctx, instance, text, {
 		Font = theme.Fonts.Medium,
@@ -61,8 +71,9 @@ function Button.new(
 	})
 	label.Size = UDim2.new(1, -20, 1, 0)
 	label.Position = UDim2.fromOffset(10, 0)
+	label.ZIndex = 2
 
-	local stroke = Util.stroke(instance, 1)
+	local stroke = Util.stroke(surface, 1)
 	stroke.Transparency = 1
 	local clicked = Signal.new()
 
@@ -89,7 +100,7 @@ function Button.new(
 			style()
 		local current = ctx.GetTheme()
 
-		ctx.Paint(instance, "BackgroundColor3", backgroundRole)
+		ctx.Paint(surface, "BackgroundColor3", backgroundRole)
 		ctx.Paint(label, "TextColor3", textRole)
 
 		if strokeColor then
@@ -100,7 +111,7 @@ function Button.new(
 		end
 
 		if animate then
-			Animation.play(instance, current.Motion.Fast, {
+			Animation.play(surface, current.Motion.Fast, {
 				BackgroundColor3 = background,
 				BackgroundTransparency = transparency,
 			}, {
@@ -115,8 +126,8 @@ function Button.new(
 				})
 			end
 		else
-			instance.BackgroundColor3 = background
-			instance.BackgroundTransparency = transparency
+			surface.BackgroundColor3 = background
+			surface.BackgroundTransparency = transparency
 			label.TextColor3 = ctx.Color(textRole)
 		end
 	end
@@ -148,8 +159,8 @@ function Button.new(
 			hoverRole = "Hover"
 		end
 
-		ctx.Paint(instance, "BackgroundColor3", hoverRole)
-		Animation.play(instance, current.Motion.Fast, {
+		ctx.Paint(surface, "BackgroundColor3", hoverRole)
+		Animation.play(surface, current.Motion.Fast, {
 			BackgroundColor3 = hoverColor,
 			BackgroundTransparency = hoverTransparency,
 		}, {
