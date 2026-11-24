@@ -1,5 +1,7 @@
 # Kaizax UI
 
+![Kaizax UI screenshot placeholder](docs/screenshot.png)
+
 A native Roblox interface library for dense tool panels: dark instrumentation chrome, one accent color, hairline borders, mono numeric readouts, and components that stay in sync with a live theme.
 
 Everything renders with `ScreenGui`, `Frame`, `TextLabel`, `TextButton`, `TextBox`, `ScrollingFrame`, `UIListLayout`, `UICorner`, `UIStroke`, `UIPadding`, `UIScale`, and `TweenService`. There is no web runtime and no image assets to ship.
@@ -19,6 +21,7 @@ Window
 - **Lifecycle safe.** Every connection, tween, popup, and GUI object is owned by a cleanup bag.
 - **Reduced motion aware.** All motion goes through one animation helper and respects `GuiService.ReducedMotionEnabled`.
 - **Window behavior.** Drag, resize, minimize, close, toggle key, viewport scaling, and popup placement that flips near screen edges.
+- **Auto re-execute.** Queues the bundled script on teleport when the executor supports `queue_on_teleport`; requires an executor with that API.
 - **Four presets.** Default (mint), Midnight (blue), Ember (amber), Graphite (neutral).
 
 ## Requirements
@@ -113,6 +116,14 @@ section:CreateButton({
 ```
 
 A full demo lives in [`examples/Demo.luau`](examples/Demo.luau). It exercises every control, theme switching, notifications, status readouts, minimize, close, and destroy.
+
+## One-line loader
+
+```lua
+loadstring(game:HttpGet("https://raw.githubusercontent.com/zippyyyyyyy/kaizax-lib/main/build/kaizax-demo.luau"))()
+```
+
+The bundled demo includes the example harness. Auto re-execute requires an executor with `queue_on_teleport`.
 
 ## Components
 

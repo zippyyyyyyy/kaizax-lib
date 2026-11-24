@@ -8,10 +8,16 @@ Packages/
 DevPackages/
 ServerPackages/
 
-# Tooling
-build/
+# Tooling / local junk
+build/*
+!build/kaizax-demo.luau
 *.log
 .env
 .env.*
 .DS_Store
 Thumbs.db
+node_modules/
+.vscode/
+.idea/
+Kaizax/
+Kaizax/config.json
