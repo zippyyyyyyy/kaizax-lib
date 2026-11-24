@@ -54,6 +54,7 @@ export type WindowMetrics = {
 	Sidebar: number,
 	TopBar: number,
 	PageHeader: number,
+	Footer: number,
 	Padding: number,
 	RowHeight: number,
 }

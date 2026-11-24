@@ -51,6 +51,7 @@ local DEFAULT: Types.Theme = {
 		Sidebar = 240,
 		TopBar = 56,
 		PageHeader = 100,
+		Footer = 56,
 		Padding = 24,
 		RowHeight = 40,
 	},

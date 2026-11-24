@@ -93,6 +93,7 @@ function Window.new(library: any, options: Options): Window
 
 	local width = if options.Size then options.Size.X else theme.Window.Width
 	local height = if options.Size then options.Size.Y else theme.Window.Height
+	local footerHeight = theme.Window.Footer
 
 	local gui = Util.create("ScreenGui", {
 		Name = "Kaizax",
@@ -125,28 +126,16 @@ function Window.new(library: any, options: Options): Window
 		Size = UDim2.new(1, 0, 0, theme.Window.TopBar),
 		ZIndex = 2,
 	}, window)
-	Util.corner(topSurface, theme.Radius.Window)
 	Util.paint(topSurface, "BackgroundColor3", "Surface", theme)
-
-	local topSurfaceFill = Util.frame({
-		Name = "TopSurfaceFill",
-		BackgroundColor3 = theme.Palette.Surface,
-		BorderSizePixel = 0,
-		Position = UDim2.fromOffset(0, theme.Radius.Window),
-		Size = UDim2.new(1, 0, 0, math.max(0, theme.Window.TopBar - theme.Radius.Window)),
-		ZIndex = 2,
-	}, window)
-	Util.paint(topSurfaceFill, "BackgroundColor3", "Surface", theme)
 
 	local sideSurface = Util.frame({
 		Name = "SideSurface",
 		BackgroundColor3 = theme.Palette.Surface,
 		BorderSizePixel = 0,
-		Position = UDim2.fromOffset(0, theme.Window.TopBar - theme.Radius.Window),
-		Size = UDim2.new(0, theme.Window.Sidebar, 1, -(theme.Window.TopBar - theme.Radius.Window)),
+		Position = UDim2.fromOffset(0, theme.Window.TopBar),
+		Size = UDim2.new(0, theme.Window.Sidebar, 1, -theme.Window.TopBar),
 		ZIndex = 2,
 	}, window)
-	Util.corner(sideSurface, theme.Radius.Window)
 	Util.paint(sideSurface, "BackgroundColor3", "Surface", theme)
 
 	local topBar = Util.frame({
@@ -190,7 +179,7 @@ function Window.new(library: any, options: Options): Window
 		BackgroundTransparency = 1,
 		BorderSizePixel = 0,
 		Position = UDim2.fromOffset(8, 10),
-		Size = UDim2.new(1, -24, 1, -64),
+		Size = UDim2.new(1, -24, 1, -(footerHeight + 16)),
 		CanvasSize = UDim2.new(),
 		AutomaticCanvasSize = Enum.AutomaticSize.Y,
 		ScrollBarThickness = 6,
@@ -217,7 +206,7 @@ function Window.new(library: any, options: Options): Window
 		Name = "ActiveIndicator",
 		BackgroundColor3 = theme.Palette.Accent,
 		BorderSizePixel = 0,
-		Position = UDim2.fromOffset(10, 9),
+		Position = UDim2.fromOffset(5, 9),
 		Size = UDim2.fromOffset(3, 18),
 		Visible = false,
 		ZIndex = 6,
@@ -230,7 +219,7 @@ function Window.new(library: any, options: Options): Window
 		BackgroundTransparency = 1,
 		AnchorPoint = Vector2.new(0, 1),
 		Position = UDim2.new(0, 0, 1, 0),
-		Size = UDim2.new(1, 0, 0, 48),
+		Size = UDim2.new(1, 0, 0, footerHeight),
 	}, sidebar)
 
 	local footerLine = Util.frame({
@@ -244,11 +233,12 @@ function Window.new(library: any, options: Options): Window
 	local versionLabel = Util.label({
 		BackgroundTransparency = 1,
 		Font = theme.Fonts.Mono,
-		Position = UDim2.fromOffset(12, 10),
-		Size = UDim2.new(1, -24, 0, 14),
+		Position = UDim2.fromOffset(28, 10),
+		Size = UDim2.new(1, -56, 0, 14),
 		Text = `Kaizax {library.Version}`,
 		TextColor3 = theme.Palette.TextFaint,
 		TextSize = 11,
+		TextTruncate = Enum.TextTruncate.AtEnd,
 		TextXAlignment = Enum.TextXAlignment.Left,
 		TextYAlignment = Enum.TextYAlignment.Center,
 	}, sidebarFooter)
@@ -257,11 +247,12 @@ function Window.new(library: any, options: Options): Window
 	local toggleHint = Util.label({
 		BackgroundTransparency = 1,
 		Font = theme.Fonts.Mono,
-		Position = UDim2.fromOffset(12, 26),
-		Size = UDim2.new(1, -24, 0, 14),
+		Position = UDim2.fromOffset(28, 26),
+		Size = UDim2.new(1, -56, 0, 14),
 		Text = if toggleKey then `{toggleKey.Name} to toggle` else "",
 		TextColor3 = theme.Palette.TextFaint,
 		TextSize = 11,
+		TextTruncate = Enum.TextTruncate.AtEnd,
 		TextXAlignment = Enum.TextXAlignment.Left,
 		TextYAlignment = Enum.TextYAlignment.Center,
 		Visible = toggleKey ~= nil,
@@ -275,6 +266,27 @@ function Window.new(library: any, options: Options): Window
 		Size = UDim2.new(1, -theme.Window.Sidebar, 1, -theme.Window.TopBar),
 		ZIndex = 2,
 	}, window)
+
+	local contentFooter = Util.frame({
+		Name = "ContentFooter",
+		BackgroundColor3 = theme.Palette.Surface,
+		BorderSizePixel = 0,
+		AnchorPoint = Vector2.new(0, 1),
+		Position = UDim2.new(0, 0, 1, 0),
+		Size = UDim2.new(1, 0, 0, footerHeight),
+		ZIndex = 3,
+	}, content)
+	Util.paint(contentFooter, "BackgroundColor3", "Surface", theme)
+
+	local contentFooterLine = Util.frame({
+		Name = "ContentFooterLine",
+		BackgroundColor3 = theme.Palette.Stroke,
+		BorderSizePixel = 0,
+		Position = UDim2.fromOffset(24, 0),
+		Size = UDim2.new(1, -48, 0, 1),
+		ZIndex = 4,
+	}, contentFooter)
+	Util.paint(contentFooterLine, "BackgroundColor3", "Stroke", theme)
 
 	local overlay = Util.frame({
 		Name = "Overlay",
@@ -440,7 +452,7 @@ function Window.new(library: any, options: Options): Window
 
 		local y = indicatorY(entry.order)
 		if not animate or not activeIndicator.Visible then
-			activeIndicator.Position = UDim2.fromOffset(10, y)
+			activeIndicator.Position = UDim2.fromOffset(5, y)
 			activeIndicator.Size = UDim2.fromOffset(3, 18)
 			activeIndicator.Visible = true
 			return
@@ -449,7 +461,7 @@ function Window.new(library: any, options: Options): Window
 		local smooth = library:_GetTheme().Motion.Slow
 		local pulse = Animation.duration(smooth / 2)
 		indicatorMove = Animation.play(activeIndicator, smooth, {
-			Position = UDim2.fromOffset(10, y),
+			Position = UDim2.fromOffset(5, y),
 		}, { easing = "Sine", direction = "InOut" })
 		indicatorPulse = Animation.play(activeIndicator, pulse, {
 			Size = UDim2.fromOffset(3, 22),
@@ -478,7 +490,6 @@ function Window.new(library: any, options: Options): Window
 		local current = library:_GetTheme()
 		local backgroundRole = if active then "SurfaceRaised" elseif hovered then "Hover" else "Surface"
 		local labelRole = if active then "Text" elseif hovered then "Text" else "TextMuted"
-		local labelX = if active then 14 else 16
 
 		Util.paint(entry.button, "BackgroundColor3", backgroundRole, current)
 		Util.paint(entry.label, "TextColor3", labelRole, current)
@@ -488,7 +499,6 @@ function Window.new(library: any, options: Options): Window
 		}, { easing = "Sine", direction = "InOut" })
 		Animation.play(entry.label, current.Motion.Normal, {
 			TextColor3 = (current.Palette :: any)[labelRole],
-			Position = UDim2.fromOffset(labelX, 0),
 		}, { easing = "Sine", direction = "InOut" })
 	end
 
@@ -560,6 +570,9 @@ function Window.new(library: any, options: Options): Window
 			ZIndex = 5,
 		}, tabScroller)
 		Util.corner(button, theme.Radius.Element)
+		Util.padding(button, 20, 0)
+		local buttonList = Util.list(button, 0, Enum.FillDirection.Horizontal)
+		buttonList.VerticalAlignment = Enum.VerticalAlignment.Center
 		local tabScale = Base.pressable(button, bag)
 		tabScale.Scale = 0.96
 		Animation.play(tabScale, theme.Motion.Normal, {
@@ -569,8 +582,7 @@ function Window.new(library: any, options: Options): Window
 		local label = Util.label({
 			BackgroundTransparency = 1,
 			Font = theme.Fonts.Medium,
-			Position = UDim2.fromOffset(16, 0),
-			Size = UDim2.new(1, -28, 1, 0),
+			Size = UDim2.new(1, -40, 1, 0),
 			Text = tab.Name,
 			TextColor3 = theme.Palette.TextMuted,
 			TextSize = 13,
@@ -1079,7 +1091,7 @@ function Window.new(library: any, options: Options): Window
 		subtitle = Util.label({
 			BackgroundTransparency = 1,
 			Font = theme.Fonts.Mono,
-			Position = UDim2.new(0, 40, 0, 35),
+			Position = UDim2.new(0, 40, 0, 34),
 			Size = UDim2.new(0.5, -56, 0, 16),
 			Text = options.Subtitle,
 			TextColor3 = theme.Palette.TextMuted,
@@ -1089,7 +1101,8 @@ function Window.new(library: any, options: Options): Window
 			ZIndex = 3,
 		}, topBar)
 		Util.paint(subtitle, "TextColor3", "TextMuted", theme)
-		titleLabel.Position = UDim2.fromOffset(40, 9)
+		brandDot.Position = UDim2.fromOffset(20, 14)
+		titleLabel.Position = UDim2.fromOffset(40, 8)
 		titleLabel.Size = UDim2.new(0.5, -56, 0, 22)
 	end
 
