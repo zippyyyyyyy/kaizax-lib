@@ -66,12 +66,13 @@ function Tab.new(
 	title.Size = UDim2.new(0.56, -24, 0, 34)
 
 	local subtitle = Base.text(ctx, header, description, {
-		Font = theme.Fonts.Regular,
-		Size = 13,
+		Font = theme.Fonts.Medium,
+		Size = 14,
 		ColorRole = "TextMuted",
+		Truncate = false,
 	})
-	subtitle.Position = UDim2.fromOffset(24, 58)
-	subtitle.Size = UDim2.new(0.56, -24, 0, 20)
+	subtitle.Position = UDim2.fromOffset(24, 57)
+	subtitle.Size = UDim2.new(0.56, -24, 0, 24)
 	subtitle.Visible = description ~= ""
 
 	local bar = Util.frame({

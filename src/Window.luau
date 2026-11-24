@@ -102,32 +102,6 @@ function Window.new(library: any, options: Options): Window
 		ZIndexBehavior = Enum.ZIndexBehavior.Sibling,
 	}, resolveParent(options.Parent)) :: ScreenGui
 
-	local shadowLayers: { { frame: Frame, scale: UIScale, grow: number, y: number, transparency: number } } = {}
-	local shadowSpecs = {
-		{ grow = 24, y = 10, transparency = 0.90, radius = theme.Radius.Window + 12 },
-		{ grow = 16, y = 6, transparency = 0.82, radius = theme.Radius.Window + 8 },
-		{ grow = 8, y = 2, transparency = 0.72, radius = theme.Radius.Window + 4 },
-	}
-	for index, spec in shadowSpecs do
-		local layer = Util.frame({
-			Name = `Shadow_{index}`,
-			BackgroundColor3 = Color3.new(0, 0, 0),
-			BackgroundTransparency = spec.transparency,
-			BorderSizePixel = 0,
-			Position = UDim2.fromOffset(-spec.grow / 2, -spec.grow / 2 + spec.y),
-			Size = UDim2.fromOffset(width + spec.grow, height + spec.grow),
-			ZIndex = 0,
-		}, gui)
-		Util.corner(layer, spec.radius)
-		table.insert(shadowLayers, {
-			frame = layer,
-			scale = Util.create("UIScale", { Scale = 1 }, layer) :: UIScale,
-			grow = spec.grow,
-			y = spec.y,
-			transparency = spec.transparency,
-		})
-	end
-
 	local window = Util.frame({
 		Name = "Window",
 		BackgroundColor3 = theme.Palette.Background,
@@ -148,18 +122,28 @@ function Window.new(library: any, options: Options): Window
 		Name = "TopSurface",
 		BackgroundColor3 = theme.Palette.Surface,
 		BorderSizePixel = 0,
-		Size = UDim2.new(1, 0, 0, theme.Window.TopBar + theme.Radius.Window),
+		Size = UDim2.new(1, 0, 0, theme.Window.TopBar),
 		ZIndex = 2,
 	}, window)
 	Util.corner(topSurface, theme.Radius.Window)
 	Util.paint(topSurface, "BackgroundColor3", "Surface", theme)
 
+	local topSurfaceFill = Util.frame({
+		Name = "TopSurfaceFill",
+		BackgroundColor3 = theme.Palette.Surface,
+		BorderSizePixel = 0,
+		Position = UDim2.fromOffset(0, theme.Radius.Window),
+		Size = UDim2.new(1, 0, 0, math.max(0, theme.Window.TopBar - theme.Radius.Window)),
+		ZIndex = 2,
+	}, window)
+	Util.paint(topSurfaceFill, "BackgroundColor3", "Surface", theme)
+
 	local sideSurface = Util.frame({
 		Name = "SideSurface",
 		BackgroundColor3 = theme.Palette.Surface,
 		BorderSizePixel = 0,
-		Position = UDim2.fromOffset(0, theme.Window.TopBar),
-		Size = UDim2.new(0, theme.Window.Sidebar, 1, -theme.Window.TopBar),
+		Position = UDim2.fromOffset(0, theme.Window.TopBar - theme.Radius.Window),
+		Size = UDim2.new(0, theme.Window.Sidebar, 1, -(theme.Window.TopBar - theme.Radius.Window)),
 		ZIndex = 2,
 	}, window)
 	Util.corner(sideSurface, theme.Radius.Window)
@@ -206,15 +190,17 @@ function Window.new(library: any, options: Options): Window
 		BackgroundTransparency = 1,
 		BorderSizePixel = 0,
 		Position = UDim2.fromOffset(8, 10),
-		Size = UDim2.new(1, -16, 1, -64),
+		Size = UDim2.new(1, -24, 1, -64),
 		CanvasSize = UDim2.new(),
 		AutomaticCanvasSize = Enum.AutomaticSize.Y,
-		ScrollBarThickness = 3,
+		ScrollBarThickness = 6,
 		ScrollBarImageColor3 = theme.Palette.StrokeStrong,
+		ScrollBarImageTransparency = 0.15,
 		ScrollingDirection = Enum.ScrollingDirection.Y,
 		ElasticBehavior = Enum.ElasticBehavior.WhenScrollable,
 		ZIndex = 4,
 	}, sidebar)
+	Util.paint(tabScroller, "ScrollBarImageColor3", "StrokeStrong", theme)
 	Util.list(tabScroller, 4)
 
 	local tabRail = Util.frame({
@@ -231,7 +217,7 @@ function Window.new(library: any, options: Options): Window
 		Name = "ActiveIndicator",
 		BackgroundColor3 = theme.Palette.Accent,
 		BorderSizePixel = 0,
-		Position = UDim2.fromOffset(0, 9),
+		Position = UDim2.fromOffset(10, 9),
 		Size = UDim2.fromOffset(3, 18),
 		Visible = false,
 		ZIndex = 6,
@@ -454,7 +440,7 @@ function Window.new(library: any, options: Options): Window
 
 		local y = indicatorY(entry.order)
 		if not animate or not activeIndicator.Visible then
-			activeIndicator.Position = UDim2.fromOffset(0, y)
+			activeIndicator.Position = UDim2.fromOffset(10, y)
 			activeIndicator.Size = UDim2.fromOffset(3, 18)
 			activeIndicator.Visible = true
 			return
@@ -463,7 +449,7 @@ function Window.new(library: any, options: Options): Window
 		local smooth = library:_GetTheme().Motion.Slow
 		local pulse = Animation.duration(smooth / 2)
 		indicatorMove = Animation.play(activeIndicator, smooth, {
-			Position = UDim2.fromOffset(0, y),
+			Position = UDim2.fromOffset(10, y),
 		}, { easing = "Sine", direction = "InOut" })
 		indicatorPulse = Animation.play(activeIndicator, pulse, {
 			Size = UDim2.fromOffset(3, 22),
@@ -714,9 +700,6 @@ function Window.new(library: any, options: Options): Window
 
 	function self:_ApplyTheme(nextTheme: Types.Theme)
 		Util.applyTheme(gui, nextTheme)
-		for _, layer in shadowLayers do
-			layer.frame.BackgroundTransparency = layer.transparency
-		end
 		for item in tabButtons do
 			paintTab(item, item == activeTab, false)
 		end
@@ -897,26 +880,6 @@ function Window.new(library: any, options: Options): Window
 		self:SetOpen(false)
 	end))
 
-	local function syncShadow()
-		for _, layer in shadowLayers do
-			layer.frame.Size = UDim2.new(
-				window.Size.X.Scale,
-				window.Size.X.Offset + layer.grow,
-				window.Size.Y.Scale,
-				window.Size.Y.Offset + layer.grow
-			)
-			layer.frame.Position = UDim2.new(
-				window.Position.X.Scale,
-				window.Position.X.Offset - layer.grow / 2,
-				window.Position.Y.Scale,
-				window.Position.Y.Offset - layer.grow / 2 + layer.y
-			)
-		end
-	end
-
-	bag:Add(window:GetPropertyChangedSignal("Size"):Connect(syncShadow))
-	bag:Add(window:GetPropertyChangedSignal("Position"):Connect(syncShadow))
-
 	local function applyScale()
 		local viewport = Util.viewportSize()
 		local nextScale = math.clamp(math.min(
@@ -926,9 +889,6 @@ function Window.new(library: any, options: Options): Window
 		), 0.35, 1)
 
 		scale.Scale = nextScale
-		for _, layer in shadowLayers do
-			layer.scale.Scale = nextScale
-		end
 		updateSearchVisibility()
 		return nextScale
 	end
@@ -1101,7 +1061,6 @@ function Window.new(library: any, options: Options): Window
 	content.Size = UDim2.new(1, -theme.Window.Sidebar, 1, -theme.Window.TopBar)
 
 	local initialScale = applyScale()
-	syncShadow()
 
 	local viewport = Util.viewportSize()
 	window.Position = UDim2.fromOffset(

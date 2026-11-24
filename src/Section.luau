@@ -99,7 +99,7 @@ function Section.new(
 	baseCtx.Paint(root, "BackgroundColor3", "Surface")
 	baseCtx.Paint(stroke, "Color", "Stroke")
 	Util.padding(root, 24, 20)
-	Util.list(root, 8)
+	Util.list(root, 12)
 
 	local header = Util.frame({
 		Name = "Header",
@@ -149,6 +149,10 @@ function Section.new(
 	}, root)
 
 	Util.list(content, 12)
+
+	if description then
+		description.Parent = content
+	end
 
 	local function register(row: GuiObject, searchText: string?)
 		table.insert(entries, {

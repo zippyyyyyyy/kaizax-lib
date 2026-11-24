@@ -78,7 +78,7 @@ function Button.new(
 		elseif variant == "Danger" then
 			return current.Palette.Danger, 0.9, "Danger", "Danger", current.Palette.Danger, 0.65, "Danger"
 		elseif variant == "Ghost" then
-			return current.Palette.Hover, 1, "Hover", "TextMuted", nil, nil, "Hover"
+			return current.Palette.Surface, 0.35, "Surface", "TextMuted", current.Palette.Stroke, 0.35, "Stroke"
 		end
 
 		return current.Palette.SurfaceRaised, 0, "SurfaceRaised", "Text", current.Palette.Stroke, 0, "Stroke"
@@ -135,7 +135,7 @@ function Button.new(
 		local hoverRole: string
 
 		if variant == "Primary" then
-			hoverColor = current.Palette.Accent:Lerp(Color3.new(1, 1, 1), 0.08)
+			hoverColor = current.Palette.Accent:Lerp(current.Palette.Text, 0.08)
 			hoverTransparency = 0
 			hoverRole = "Accent"
 		elseif variant == "Danger" then

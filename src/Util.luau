@@ -14,6 +14,7 @@ local COLOR_PROPERTIES = {
 	"BackgroundColor3",
 	"TextColor3",
 	"ImageColor3",
+	"ScrollBarImageColor3",
 	"Color",
 	"PlaceholderColor3",
 	"TextStrokeColor3",

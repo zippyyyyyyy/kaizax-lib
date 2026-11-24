@@ -42,7 +42,6 @@ return function(Library: any)
 		Text = "Interface",
 		Value = "Stable",
 		Kind = "success",
-		Pulse = true,
 	})
 
 	local themeStatus = session:CreateStatus({
@@ -71,7 +70,7 @@ return function(Library: any)
 		Text = "Run health check",
 		Variant = "Primary",
 		Callback = function()
-			interfaceStatus:SetStatus("Stable", "success", true)
+			interfaceStatus:SetStatus("Stable", "success", false)
 			report("Checked just now")
 			window:Notify({
 				Title = "Health check complete",

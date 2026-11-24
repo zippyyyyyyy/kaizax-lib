@@ -39,15 +39,16 @@ function SubTab.new(
 		Name = if name then `SubTab_{name}` else "SubTab_General",
 		BackgroundTransparency = 1,
 		BorderSizePixel = 0,
-		Size = UDim2.fromScale(1, 1),
+		Size = UDim2.new(1, 0, 1, -32),
 		CanvasSize = UDim2.new(),
 		AutomaticCanvasSize = Enum.AutomaticSize.Y,
-		ScrollBarThickness = 4,
+		ScrollBarThickness = 6,
 		ScrollBarImageColor3 = theme.Palette.StrokeStrong,
-		ScrollBarImageTransparency = 0.25,
+		ScrollBarImageTransparency = 0.15,
 		ScrollingDirection = Enum.ScrollingDirection.Y,
 		ElasticBehavior = Enum.ElasticBehavior.WhenScrollable,
 	}, parent)
+	Util.paint(scroller, "ScrollBarImageColor3", "StrokeStrong", theme)
 	scroller.Visible = false
 
 	local holder = Util.frame({
@@ -100,7 +101,7 @@ function SubTab.new(
 		Name = "BottomSpace",
 		BackgroundTransparency = 1,
 		LayoutOrder = 2,
-		Size = UDim2.new(1, 0, 0, 24),
+		Size = UDim2.new(1, 0, 0, 32),
 	}, holder)
 
 	local subtab = setmetatable({} :: any, SubTab) :: SubTab
