@@ -75,7 +75,7 @@ function Window.new(library: any, options: Options): Window
 	local bag = Util.bag()
 	local popupBag = Util.bag()
 	local tabs: { any } = {}
-	local tabButtons: { [any]: { button: TextButton, label: TextLabel, accent: Frame } } = {}
+	local tabButtons: { [any]: { button: TextButton, label: TextLabel, order: number } } = {}
 	local activeTab: any = nil
 	local activePopup: any = nil
 	local minimized = false
@@ -197,6 +197,27 @@ function Window.new(library: any, options: Options): Window
 	}, sidebar)
 	Util.list(tabScroller, 4)
 
+	local tabRail = Util.frame({
+		Name = "TabRail",
+		BackgroundTransparency = 1,
+		BorderSizePixel = 0,
+		ClipsDescendants = true,
+		Position = tabScroller.Position,
+		Size = tabScroller.Size,
+		ZIndex = 3,
+	}, sidebar)
+
+	local activeIndicator = Util.frame({
+		Name = "ActiveIndicator",
+		BackgroundColor3 = theme.Palette.Accent,
+		BorderSizePixel = 0,
+		Position = UDim2.fromOffset(0, 9),
+		Size = UDim2.fromOffset(3, 18),
+		Visible = false,
+		ZIndex = 4,
+	}, tabRail)
+	Util.corner(activeIndicator, 1)
+	Util.paint(activeIndicator, "BackgroundColor3", "Accent", theme)
 
 	local sidebarFooter = Util.frame({
 		Name = "Footer",
@@ -392,6 +413,35 @@ function Window.new(library: any, options: Options): Window
 		searchFrame.Visible = not minimized and window.Size.X.Offset >= 760
 	end
 
+	local function indicatorY(order: number): number
+		return (order - 1) * 40 + 9 - tabScroller.CanvasPosition.Y
+	end
+
+	local function moveIndicator(target: any, animate: boolean)
+		local entry = tabButtons[target]
+		if not entry then
+			return
+		end
+
+		local y = indicatorY(entry.order)
+		if not animate or not activeIndicator.Visible then
+			activeIndicator.Position = UDim2.fromOffset(0, y)
+			activeIndicator.Size = UDim2.fromOffset(3, 18)
+			activeIndicator.Visible = true
+			return
+		end
+
+		activeIndicator.Size = UDim2.fromOffset(3, 24)
+		Animation.play(activeIndicator, library:_GetTheme().Motion.Normal, {
+			Position = UDim2.fromOffset(0, y),
+			Size = UDim2.fromOffset(3, 18),
+		}, { easing = "Quart" })
+	end
+
+	bag:Add(tabScroller:GetPropertyChangedSignal("CanvasPosition"):Connect(function()
+		moveIndicator(activeTab, false)
+	end))
+
 	local function paintTab(target: any, active: boolean, hovered: boolean)
 		local entry = tabButtons[target]
 		if not entry then
@@ -401,21 +451,18 @@ function Window.new(library: any, options: Options): Window
 		local current = library:_GetTheme()
 		local backgroundRole = if active then "SurfaceRaised" elseif hovered then "Hover" else "Surface"
 		local labelRole = if active then "Text" elseif hovered then "Text" else "TextMuted"
+		local labelX = if active then 14 else 16
 
 		Util.paint(entry.button, "BackgroundColor3", backgroundRole, current)
 		Util.paint(entry.label, "TextColor3", labelRole, current)
-		entry.accent.Visible = active
-		entry.accent.BackgroundTransparency = if active then 0.35 else 1
 
 		Animation.play(entry.button, current.Motion.Fast, {
 			BackgroundColor3 = (current.Palette :: any)[backgroundRole],
 		}, { easing = "Quad" })
 		Animation.play(entry.label, current.Motion.Fast, {
 			TextColor3 = (current.Palette :: any)[labelRole],
-		}, { easing = "Quad" })
-		Animation.play(entry.accent, current.Motion.Fast, {
-			BackgroundTransparency = if active then 0 else 1,
-		}, { easing = "Quad" })
+			Position = UDim2.fromOffset(labelX, 0),
+		}, { easing = "Quart" })
 	end
 
 	local function selectTab(target: any)
@@ -430,6 +477,7 @@ function Window.new(library: any, options: Options): Window
 		for item in tabButtons do
 			paintTab(item, item == target, false)
 		end
+		moveIndicator(target, true)
 
 		local query = search:GetText()
 		if query ~= "" then
@@ -471,6 +519,7 @@ function Window.new(library: any, options: Options): Window
 		})
 
 		table.insert(tabs, tab)
+		local order = #tabs
 
 		local button = Util.textButton({
 			Name = `TabButton_{tab.Name}`,
@@ -480,7 +529,7 @@ function Window.new(library: any, options: Options): Window
 			Size = UDim2.new(1, 0, 0, 36),
 			Text = "",
 			AutoButtonColor = false,
-			LayoutOrder = #tabs,
+			LayoutOrder = order,
 		}, tabScroller)
 		Util.corner(button, theme.Radius.Element)
 		local tabScale = Base.pressable(button, bag)
@@ -489,21 +538,11 @@ function Window.new(library: any, options: Options): Window
 			Scale = 1,
 		}, { delay = 0.03 * #tabs, easing = "Quart" })
 
-		local accent = Util.frame({
-			Name = "Accent",
-			BackgroundColor3 = theme.Palette.Accent,
-			BorderSizePixel = 0,
-			Position = UDim2.fromOffset(0, 9),
-			Size = UDim2.new(0, 3, 0, 18),
-			Visible = false,
-		}, button)
-		Util.corner(accent, 1)
-
 		local label = Util.label({
 			BackgroundTransparency = 1,
 			Font = theme.Fonts.Medium,
-			Position = UDim2.fromOffset(14, 0),
-			Size = UDim2.new(1, -26, 1, 0),
+			Position = UDim2.fromOffset(16, 0),
+			Size = UDim2.new(1, -28, 1, 0),
 			Text = tab.Name,
 			TextColor3 = theme.Palette.TextMuted,
 			TextSize = 13,
@@ -514,12 +553,11 @@ function Window.new(library: any, options: Options): Window
 
 		Util.paint(button, "BackgroundColor3", "Surface", theme)
 		Util.paint(label, "TextColor3", "TextMuted", theme)
-		Util.paint(accent, "BackgroundColor3", "Accent", theme)
 
 		tabButtons[tab] = {
 			button = button,
 			label = label,
-			accent = accent,
+			order = order,
 		}
 
 		bag:Add(button.MouseEnter:Connect(function()
