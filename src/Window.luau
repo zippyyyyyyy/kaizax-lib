@@ -103,7 +103,19 @@ function Window.new(library: any, options: Options): Window
 		ZIndexBehavior = Enum.ZIndexBehavior.Sibling,
 	}, resolveParent(options.Parent)) :: ScreenGui
 
-	local window = Util.frame({
+	local windowShadow = Util.frame({
+		Name = "WindowShadow",
+		BackgroundColor3 = theme.Palette.Background,
+		BackgroundTransparency = 0.35,
+		BorderSizePixel = 0,
+		Position = UDim2.fromOffset(0, 6),
+		Size = UDim2.fromOffset(width, height),
+		ZIndex = 0,
+	}, gui)
+	Util.corner(windowShadow, theme.Radius.Window)
+	Util.paint(windowShadow, "BackgroundColor3", "Background", theme)
+
+	local window = Util.create("CanvasGroup", {
 		Name = "Window",
 		BackgroundColor3 = theme.Palette.Background,
 		BorderSizePixel = 0,
@@ -116,6 +128,13 @@ function Window.new(library: any, options: Options): Window
 	local windowStroke = Util.stroke(window, 1)
 	Util.paint(window, "BackgroundColor3", "Background", theme)
 	Util.paint(windowStroke, "Color", "Stroke", theme)
+
+	local function syncWindowShadow()
+		windowShadow.Position = window.Position + UDim2.fromOffset(0, 6)
+		windowShadow.Size = window.Size
+	end
+	bag:Add(window:GetPropertyChangedSignal("Position"):Connect(syncWindowShadow))
+	bag:Add(window:GetPropertyChangedSignal("Size"):Connect(syncWindowShadow))
 
 	local scale = Util.create("UIScale", { Scale = 1 }, window) :: UIScale
 
@@ -266,27 +285,6 @@ function Window.new(library: any, options: Options): Window
 		Size = UDim2.new(1, -theme.Window.Sidebar, 1, -theme.Window.TopBar),
 		ZIndex = 2,
 	}, window)
-
-	local contentFooter = Util.frame({
-		Name = "ContentFooter",
-		BackgroundColor3 = theme.Palette.Surface,
-		BorderSizePixel = 0,
-		AnchorPoint = Vector2.new(0, 1),
-		Position = UDim2.new(0, 0, 1, 0),
-		Size = UDim2.new(1, 0, 0, footerHeight),
-		ZIndex = 3,
-	}, content)
-	Util.paint(contentFooter, "BackgroundColor3", "Surface", theme)
-
-	local contentFooterLine = Util.frame({
-		Name = "ContentFooterLine",
-		BackgroundColor3 = theme.Palette.Stroke,
-		BorderSizePixel = 0,
-		Position = UDim2.fromOffset(24, 0),
-		Size = UDim2.new(1, -48, 0, 1),
-		ZIndex = 4,
-	}, contentFooter)
-	Util.paint(contentFooterLine, "BackgroundColor3", "Stroke", theme)
 
 	local overlay = Util.frame({
 		Name = "Overlay",
@@ -820,8 +818,8 @@ function Window.new(library: any, options: Options): Window
 		AnchorPoint = Vector2.new(1, 1),
 		BackgroundTransparency = 1,
 		BorderSizePixel = 0,
-		Position = UDim2.fromScale(1, 1),
-		Size = UDim2.fromOffset(18, 18),
+		Position = UDim2.new(1, -20, 1, -8),
+		Size = UDim2.fromOffset(16, 16),
 		Text = "",
 		AutoButtonColor = false,
 		ZIndex = 6,

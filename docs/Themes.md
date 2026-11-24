@@ -160,7 +160,7 @@ Mono is reserved for numeric readouts, version text, and the toggle-key hint. Ti
 
 | Token | Default |
 | --- | --- |
-| `Window` | 24 |
+| `Window` | 14 |
 | `Card` | 20 |
 | `Element` | 14 |
 | `Pill` | 999 |
@@ -189,6 +189,7 @@ Layouts use a 4px rhythm. Section padding is 16px, card gaps are 8px, and contro
 | `Sidebar` | 240 |
 | `TopBar` | 56 |
 | `PageHeader` | 100 |
+| `Footer` | 56 |
 | `Padding` | 24 |
 | `RowHeight` | 40 |
 
