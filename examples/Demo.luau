@@ -100,7 +100,7 @@ return function(Library: any)
 
 	actions:CreateButton({
 		Text = "Reset demo values",
-		Variant = "Ghost",
+		Variant = "Secondary",
 		Callback = function()
 			for _, reset in resets do
 				reset()

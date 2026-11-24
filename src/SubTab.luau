@@ -42,7 +42,7 @@ function SubTab.new(
 		Size = UDim2.new(1, -4, 1, 0),
 		CanvasSize = UDim2.new(),
 		AutomaticCanvasSize = Enum.AutomaticSize.Y,
-		ScrollBarThickness = 6,
+		ScrollBarThickness = 4,
 		ScrollBarImageColor3 = theme.Palette.StrokeStrong,
 		ScrollBarImageTransparency = 0.15,
 		ScrollingDirection = Enum.ScrollingDirection.Y,

@@ -94,6 +94,7 @@ function Window.new(library: any, options: Options): Window
 	local width = if options.Size then options.Size.X else theme.Window.Width
 	local height = if options.Size then options.Size.Y else theme.Window.Height
 	local footerHeight = theme.Window.Footer
+	local cornerRadius = theme.Radius.Window
 
 	local gui = Util.create("ScreenGui", {
 		Name = "Kaizax",
@@ -112,10 +113,10 @@ function Window.new(library: any, options: Options): Window
 		Size = UDim2.fromOffset(width, height),
 		ZIndex = 0,
 	}, gui)
-	Util.corner(windowShadow, theme.Radius.Window)
+	Util.corner(windowShadow, cornerRadius)
 	Util.paint(windowShadow, "BackgroundColor3", "Background", theme)
 
-	local window = Util.create("CanvasGroup", {
+	local window = Util.frame({
 		Name = "Window",
 		BackgroundColor3 = theme.Palette.Background,
 		BorderSizePixel = 0,
@@ -124,7 +125,7 @@ function Window.new(library: any, options: Options): Window
 		Size = UDim2.fromOffset(width, height),
 		ZIndex = 1,
 	}, gui)
-	Util.corner(window, theme.Radius.Window)
+	Util.corner(window, cornerRadius)
 	local windowStroke = Util.stroke(window, 1)
 	Util.paint(window, "BackgroundColor3", "Background", theme)
 	Util.paint(windowStroke, "Color", "Stroke", theme)
@@ -145,7 +146,24 @@ function Window.new(library: any, options: Options): Window
 		Size = UDim2.new(1, 0, 0, theme.Window.TopBar),
 		ZIndex = 2,
 	}, window)
+	Util.corner(topSurface, cornerRadius)
 	Util.paint(topSurface, "BackgroundColor3", "Surface", theme)
+
+	local function cornerFiller(name: string, parent: Instance, position: UDim2, role: string): Frame
+		local filler = Util.frame({
+			Name = name,
+			BackgroundColor3 = (theme.Palette :: any)[role],
+			BorderSizePixel = 0,
+			Position = position,
+			Size = UDim2.fromOffset(cornerRadius, cornerRadius),
+			ZIndex = 2,
+		}, parent)
+		Util.paint(filler, "BackgroundColor3", role, theme)
+		return filler
+	end
+
+	cornerFiller("TopFillLeft", topSurface, UDim2.fromOffset(0, theme.Window.TopBar - cornerRadius), "Surface")
+	cornerFiller("TopFillRight", topSurface, UDim2.new(1, -cornerRadius, 1, -cornerRadius), "Surface")
 
 	local sideSurface = Util.frame({
 		Name = "SideSurface",
@@ -155,7 +173,19 @@ function Window.new(library: any, options: Options): Window
 		Size = UDim2.new(0, theme.Window.Sidebar, 1, -theme.Window.TopBar),
 		ZIndex = 2,
 	}, window)
+	Util.corner(sideSurface, cornerRadius)
 	Util.paint(sideSurface, "BackgroundColor3", "Surface", theme)
+
+	cornerFiller("SideFillTop", sideSurface, UDim2.fromOffset(theme.Window.Sidebar - cornerRadius, 0), "Surface")
+	cornerFiller("SideFillBottom", sideSurface, UDim2.new(1, -cornerRadius, 1, -cornerRadius), "Surface")
+
+	local windowCornerFill = cornerFiller(
+		"WindowCornerFill",
+		window,
+		UDim2.new(1, -cornerRadius, 1, -cornerRadius),
+		"Background"
+	)
+	windowCornerFill.ZIndex = 10
 
 	local topBar = Util.frame({
 		Name = "TopBar",
@@ -201,7 +231,7 @@ function Window.new(library: any, options: Options): Window
 		Size = UDim2.new(1, -24, 1, -(footerHeight + 16)),
 		CanvasSize = UDim2.new(),
 		AutomaticCanvasSize = Enum.AutomaticSize.Y,
-		ScrollBarThickness = 6,
+		ScrollBarThickness = 4,
 		ScrollBarImageColor3 = theme.Palette.StrokeStrong,
 		ScrollBarImageTransparency = 0.15,
 		ScrollingDirection = Enum.ScrollingDirection.Y,
@@ -307,7 +337,7 @@ function Window.new(library: any, options: Options): Window
 		Name = "BrandDot",
 		BackgroundColor3 = theme.Palette.Accent,
 		BorderSizePixel = 0,
-		Position = UDim2.fromOffset(20, 23),
+		Position = UDim2.fromOffset(8, 23),
 		Size = UDim2.fromOffset(10, 10),
 		ZIndex = 3,
 	}, topBar)
@@ -318,8 +348,8 @@ function Window.new(library: any, options: Options): Window
 		Name = "Title",
 		BackgroundTransparency = 1,
 		Font = theme.Fonts.Medium,
-		Position = UDim2.fromOffset(40, 0),
-		Size = UDim2.new(0.5, -56, 1, 0),
+		Position = UDim2.fromOffset(28, 0),
+		Size = UDim2.new(0.5, -44, 1, 0),
 		Text = options.Title or "Kaizax",
 		TextColor3 = theme.Palette.Text,
 		TextSize = 14,
@@ -739,8 +769,8 @@ function Window.new(library: any, options: Options): Window
 		local targetY = math.clamp(position.Y, math.min(8, maxY), maxY)
 
 		window.Position = UDim2.fromOffset(
-			(targetX - parentPosition.X) / currentScale,
-			(targetY - parentPosition.Y) / currentScale
+			(math.floor(targetX + 0.5) - parentPosition.X) / currentScale,
+			(math.floor(targetY + 0.5) - parentPosition.Y) / currentScale
 		)
 	end
 
@@ -818,25 +848,33 @@ function Window.new(library: any, options: Options): Window
 		AnchorPoint = Vector2.new(1, 1),
 		BackgroundTransparency = 1,
 		BorderSizePixel = 0,
-		Position = UDim2.new(1, -20, 1, -8),
+		Position = UDim2.new(1, -10, 1, -10),
 		Size = UDim2.fromOffset(16, 16),
 		Text = "",
 		AutoButtonColor = false,
-		ZIndex = 6,
+		ZIndex = 20,
 	}, window)
 
-	for index, rotation in { 45, 45 } do
-		local gripLine = Util.frame({
-			AnchorPoint = Vector2.new(1, 1),
+	local gripSurface = Util.frame({
+		Name = "Surface",
+		BackgroundColor3 = theme.Palette.SurfaceRaised,
+		BorderSizePixel = 0,
+		Size = UDim2.fromOffset(16, 16),
+		ZIndex = 20,
+	}, resizeGrip)
+	Util.corner(gripSurface, 4)
+	Util.paint(gripSurface, "BackgroundColor3", "SurfaceRaised", theme)
+
+	for index, offset in { 5, 8, 11 } do
+		local pixel = Util.frame({
+			Name = `Pixel{index}`,
 			BackgroundColor3 = theme.Palette.TextFaint,
 			BorderSizePixel = 0,
-			Position = UDim2.new(1, -(if index == 1 then 5 else 10), 1, -(if index == 1 then 10 else 5)),
-			Rotation = rotation,
-			Size = UDim2.fromOffset(if index == 1 then 9 else 6, 1.5),
-			BackgroundTransparency = if index == 1 then 0.2 else 0.45,
+			Position = UDim2.fromOffset(offset, 14 - offset),
+			Size = UDim2.fromOffset(2, 2),
+			ZIndex = 21,
 		}, resizeGrip)
-		Util.corner(gripLine, 1)
-		Util.paint(gripLine, "BackgroundColor3", "TextFaint", theme)
+		Util.paint(pixel, "BackgroundColor3", "TextFaint", theme)
 	end
 
 	bag:Add(resizeGrip.InputBegan:Connect(function(input)
@@ -866,8 +904,8 @@ function Window.new(library: any, options: Options): Window
 		local maxWidth = math.max(theme.Window.MinWidth, (viewport.X - 16) / currentScale)
 		local maxHeight = math.max(theme.Window.MinHeight, (viewport.Y - 16) / currentScale)
 
-		local nextWidth = math.clamp(resizeStartSize.X.Offset + delta.X, theme.Window.MinWidth, maxWidth)
-		local nextHeight = math.clamp(resizeStartSize.Y.Offset + delta.Y, theme.Window.MinHeight, maxHeight)
+		local nextWidth = math.floor(math.clamp(resizeStartSize.X.Offset + delta.X, theme.Window.MinWidth, maxWidth) + 0.5)
+		local nextHeight = math.floor(math.clamp(resizeStartSize.Y.Offset + delta.Y, theme.Window.MinHeight, maxHeight) + 0.5)
 
 		window.Size = UDim2.fromOffset(nextWidth, nextHeight)
 		updateSearchVisibility()
@@ -1073,10 +1111,10 @@ function Window.new(library: any, options: Options): Window
 	local initialScale = applyScale()
 
 	local viewport = Util.viewportSize()
-	window.Position = UDim2.fromOffset(
-		(viewport.X / scale.Scale - width) / 2,
-		(viewport.Y / scale.Scale - height) / 2
-	)
+	moveToAbsolute(Vector2.new(
+		(viewport.X - window.AbsoluteSize.X) / 2,
+		(viewport.Y - window.AbsoluteSize.Y) / 2
+	))
 	clampWindow()
 	updateSearchVisibility()
 
@@ -1089,8 +1127,8 @@ function Window.new(library: any, options: Options): Window
 		subtitle = Util.label({
 			BackgroundTransparency = 1,
 			Font = theme.Fonts.Mono,
-			Position = UDim2.new(0, 40, 0, 34),
-			Size = UDim2.new(0.5, -56, 0, 16),
+			Position = UDim2.fromOffset(28, 31),
+			Size = UDim2.new(0.5, -44, 0, 14),
 			Text = options.Subtitle,
 			TextColor3 = theme.Palette.TextMuted,
 			TextSize = 11,
@@ -1099,9 +1137,9 @@ function Window.new(library: any, options: Options): Window
 			ZIndex = 3,
 		}, topBar)
 		Util.paint(subtitle, "TextColor3", "TextMuted", theme)
-		brandDot.Position = UDim2.fromOffset(20, 14)
-		titleLabel.Position = UDim2.fromOffset(40, 8)
-		titleLabel.Size = UDim2.new(0.5, -56, 0, 22)
+		brandDot.Position = UDim2.fromOffset(8, 14)
+		titleLabel.Position = UDim2.fromOffset(28, 10)
+		titleLabel.Size = UDim2.new(0.5, -44, 0, 18)
 	end
 
 	local entranceVeil = Util.frame({
