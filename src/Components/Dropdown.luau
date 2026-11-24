@@ -182,7 +182,7 @@ function Dropdown.new(
 				AutoButtonColor = false,
 			}, scroller)
 
-			Util.corner(optionRow, theme.Radius.Element - 4)
+			Util.corner(optionRow, theme.Radius.Element - 2)
 
 			local optionLabel = Base.text(ctx, optionRow, item, {
 				Font = theme.Fonts.Regular,

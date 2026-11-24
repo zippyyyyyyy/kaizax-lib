@@ -170,7 +170,7 @@ function MultiDropdown.new(
 			LayoutOrder = order,
 		}, footer)
 
-		Util.corner(footerButton, theme.Radius.Element - 4)
+		Util.corner(footerButton, theme.Radius.Element - 2)
 		ctx.Paint(footerButton, "BackgroundColor3", if primary then "Accent" else "SurfaceRaised")
 
 		local label = Base.text(ctx, footerButton, text, {
@@ -256,7 +256,7 @@ function MultiDropdown.new(
 				AutoButtonColor = false,
 			}, scroller)
 
-			Util.corner(optionRow, theme.Radius.Element - 4)
+			Util.corner(optionRow, theme.Radius.Element - 2)
 
 			local box = Util.frame({
 				Name = "Checkbox",
@@ -267,7 +267,7 @@ function MultiDropdown.new(
 				BorderSizePixel = 0,
 			}, optionRow)
 
-			Util.corner(box, theme.Radius.Element - 7)
+			Util.corner(box, theme.Radius.Element - 4)
 			local boxStroke = Util.stroke(box, 1)
 
 			local checkContainer = Util.frame({

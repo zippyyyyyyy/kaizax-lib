@@ -437,7 +437,7 @@ function ColorPicker.new(
 			TextSize = 11,
 			TextXAlignment = Enum.TextXAlignment.Left,
 		}, content)
-		Util.corner(hexBox, theme.Radius.Element - 4)
+		Util.corner(hexBox, theme.Radius.Element - 2)
 		Util.padding(hexBox, 9, 0)
 		local hexStroke = Util.stroke(hexBox, 1)
 		ctx.Paint(hexBox, "BackgroundColor3", "SurfaceRaised")
@@ -460,11 +460,11 @@ function ColorPicker.new(
 			Position = UDim2.fromOffset(0, previewY),
 			Size = UDim2.fromOffset(208, 20),
 		}, content)
-		Util.corner(previewContainer, theme.Radius.Element - 4)
+		Util.corner(previewContainer, theme.Radius.Element - 2)
 
 		local previewChecker = makeChecker(previewContainer, 208, 20, 5)
 		previewChecker.Size = UDim2.fromScale(1, 1)
-		Util.corner(previewChecker, theme.Radius.Element - 4)
+		Util.corner(previewChecker, theme.Radius.Element - 2)
 
 		local previewFill = Util.frame({
 			BackgroundColor3 = color,
@@ -472,7 +472,7 @@ function ColorPicker.new(
 			BorderSizePixel = 0,
 			Size = UDim2.fromScale(1, 1),
 		}, previewContainer)
-		Util.corner(previewFill, theme.Radius.Element - 4)
+		Util.corner(previewFill, theme.Radius.Element - 2)
 
 		local previewStroke = Util.stroke(previewContainer, 1)
 		ctx.Paint(previewStroke, "Color", "Stroke")
@@ -500,7 +500,7 @@ function ColorPicker.new(
 				AutoButtonColor = false,
 				LayoutOrder = order,
 			}, footer)
-			Util.corner(button, theme.Radius.Element - 4)
+			Util.corner(button, theme.Radius.Element - 2)
 			ctx.Paint(button, "BackgroundColor3", if primary then "Accent" else "SurfaceRaised")
 			local label = Base.text(ctx, button, text, {
 				Font = theme.Fonts.Medium,

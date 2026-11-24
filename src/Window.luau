@@ -216,7 +216,7 @@ function Window.new(library: any, options: Options): Window
 		Visible = false,
 		ZIndex = 4,
 	}, tabRail)
-	Util.corner(activeIndicator, 1)
+	Util.corner(activeIndicator, theme.Radius.Pill)
 	Util.paint(activeIndicator, "BackgroundColor3", "Accent", theme)
 
 	local sidebarFooter = Util.frame({
@@ -295,7 +295,7 @@ function Window.new(library: any, options: Options): Window
 		Size = UDim2.fromOffset(10, 10),
 		ZIndex = 3,
 	}, topBar)
-	Util.corner(brandDot, 4)
+	Util.corner(brandDot, theme.Radius.Pill)
 	Util.paint(brandDot, "BackgroundColor3", "Accent", theme)
 
 	local titleLabel = Util.label({
@@ -348,7 +348,7 @@ function Window.new(library: any, options: Options): Window
 			AutoButtonColor = false,
 			ZIndex = 4,
 		}, topBar)
-		Util.corner(button, theme.Radius.Element - 2)
+		Util.corner(button, theme.Radius.Element)
 		return button
 	end
 

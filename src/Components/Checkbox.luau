@@ -55,7 +55,7 @@ function Checkbox.new(
 		Active = not disabled,
 	}, row)
 
-	Util.corner(box, theme.Radius.Element - 6)
+	Util.corner(box, theme.Radius.Element - 4)
 	local stroke = Util.stroke(box, 1)
 
 	local check = Util.frame({

@@ -181,7 +181,7 @@ function Tab.new(
 			Text = "",
 			AutoButtonColor = false,
 		}, bar)
-		Util.corner(button, theme.Radius.Element - 2)
+		Util.corner(button, theme.Radius.Element)
 
 		local label = Base.text(ctx, button, name, {
 			Font = theme.Fonts.Medium,

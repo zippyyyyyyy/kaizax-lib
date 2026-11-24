@@ -160,9 +160,9 @@ Mono is reserved for numeric readouts, version text, and the toggle-key hint. Ti
 
 | Token | Default |
 | --- | --- |
-| `Window` | 20 |
-| `Card` | 16 |
-| `Element` | 12 |
+| `Window` | 24 |
+| `Card` | 20 |
+| `Element` | 14 |
 | `Pill` | 999 |
 
 ### Spacing
